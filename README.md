@@ -98,9 +98,9 @@ The Streamlit dashboard (dashboard/app.py) provides:
 | POST | `/predict/batch` | Batch predictions |
 | GET | `/model/info` | Active model metadata |
 
-## Progress Log
+## 📋 Progress Log
 
-### Day 1 — Project Scaffold (2026-06-28)
+✅ **Day 1 — Project Scaffold**
 - Created complete folder structure
 - Set up requirements.txt with all ML and AI packages
 - Created .env.example with all required variables

@@ -108,6 +108,16 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Created src/utils/db.py connection helper
 - Initialized Git and pushed to GitHub
 
+✅ **Day 2 — Telco Data Ingestion**
+- Generated 7,043 synthetic customer records
+- Realistic churn rate of 26% matching Telco dataset
+- Created src/data/ingestion.py with full and incremental modes
+- Added error handling and Python logging
+- Created src/data/verify.py for data quality verification
+- Loaded all 7,043 rows into raw_customers PostgreSQL table
+- Created vw_churn_overview.sql and vw_high_risk.sql views
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

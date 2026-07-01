@@ -1,5 +1,15 @@
 # Changelog
 
+## Day 4 — Feature Engineering
+- Created FeatureEngineer class with full pipeline
+- Engineered features: tenure_group, charge_per_month, services_count
+- Added risk scores: contract_risk_score, payment_risk_score
+- Added SMOTE oversampling for class imbalance
+- Built sklearn preprocessing pipeline
+- Saved preprocessor to models/preprocessor.pkl
+- Created notebooks/02_feature_analysis.ipynb
+- All tests passing
+
 ## Day 3 — Exploratory Data Analysis
 - Created notebooks/01_eda.ipynb with 7 sections
 - Analyzed churn distribution (26% churn rate)

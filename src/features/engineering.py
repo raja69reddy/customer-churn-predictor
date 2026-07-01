@@ -1,10 +1,14 @@
 """Feature engineering — builds engineered features from raw_customers for modeling."""
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.utils.db import get_engine
 
 NUMERIC_COLS = ["tenure", "monthly_charges", "total_charges"]
+
+TENURE_BINS = [0, 12, 24, 48, np.inf]
+TENURE_LABELS = ["New Customer", "Growing Customer", "Established Customer", "Loyal Customer"]
 
 CATEGORICAL_COLS = [
     "gender", "partner", "dependents", "phone_service", "multiple_lines",
@@ -65,4 +69,31 @@ class FeatureEngineer:
         self.scaler = StandardScaler()
         df[NUMERIC_COLS] = self.scaler.fit_transform(df[NUMERIC_COLS])
 
+        return df
+
+    def create_tenure_group(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df["tenure_group"] = pd.cut(
+            df["tenure"], bins=TENURE_BINS, labels=TENURE_LABELS, include_lowest=True
+        )
+        return df
+
+    def create_charge_per_month(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        safe_tenure = df["tenure"].replace(0, 1)
+        df["charge_per_month"] = df["total_charges"] / safe_tenure
+        return df
+
+    def create_services_count(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df["services_count"] = (
+            (df["phone_service"] == "Yes").astype(int)
+            + (df["internet_service"] != "No").astype(int)
+            + (df["online_security"] == "Yes").astype(int)
+            + (df["online_backup"] == "Yes").astype(int)
+            + (df["device_protection"] == "Yes").astype(int)
+            + (df["tech_support"] == "Yes").astype(int)
+            + (df["streaming_tv"] == "Yes").astype(int)
+            + (df["streaming_movies"] == "Yes").astype(int)
+        )
         return df

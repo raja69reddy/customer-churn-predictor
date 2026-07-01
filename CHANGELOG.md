@@ -1,5 +1,15 @@
 # Changelog
 
+## Day 3 — Exploratory Data Analysis
+- Created notebooks/01_eda.ipynb with 7 sections
+- Analyzed churn distribution (26% churn rate)
+- Analyzed numeric and categorical features
+- Created correlation heatmap
+- Key finding: month-to-month contracts have 43% churn
+- Created src/data/eda_summary.py
+- Updated SQL views with tenure and charge tiers
+- All tests passing
+
 ## Day 2 — Telco Data Ingestion
 - Generated 7,043 synthetic customer records
 - 26% churn rate matching real Telco dataset distribution

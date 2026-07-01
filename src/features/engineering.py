@@ -1,6 +1,17 @@
-"""Feature engineering — builds processed_customers from raw_customers."""
+"""Feature engineering — builds engineered features from raw_customers for modeling."""
 import pandas as pd
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
 from src.utils.db import get_engine
+
+NUMERIC_COLS = ["tenure", "monthly_charges", "total_charges"]
+
+CATEGORICAL_COLS = [
+    "gender", "partner", "dependents", "phone_service", "multiple_lines",
+    "internet_service", "online_security", "online_backup", "device_protection",
+    "tech_support", "streaming_tv", "streaming_movies", "contract",
+    "paperless_billing", "payment_method",
+]
 
 SERVICE_COLS = [
     "phone_service", "multiple_lines", "internet_service",
@@ -8,47 +19,50 @@ SERVICE_COLS = [
     "tech_support", "streaming_tv", "streaming_movies",
 ]
 
-CONTRACT_RISK = {"Month-to-month": 3, "One year": 2, "Two year": 1}
-PAYMENT_RISK = {
-    "Electronic check": 3, "Mailed check": 2,
-    "Bank transfer (automatic)": 1, "Credit card (automatic)": 1,
-}
 
+class FeatureEngineer:
+    """Builds the processed_customers feature set from raw_customers."""
 
-def _tenure_group(tenure: int) -> str:
-    if tenure <= 12:
-        return "0-1 year"
-    if tenure <= 24:
-        return "1-2 years"
-    if tenure <= 48:
-        return "2-4 years"
-    return "4+ years"
+    def __init__(self):
+        self.encoder = None
+        self.scaler = None
 
+    def load_raw_data(self) -> pd.DataFrame:
+        engine = get_engine()
+        return pd.read_sql("SELECT * FROM raw_customers", engine)
 
-def engineer(df: pd.DataFrame) -> pd.DataFrame:
-    out = pd.DataFrame()
-    out["customer_id"] = df["customerid"]
-    out["tenure_group"] = df["tenure"].apply(_tenure_group)
-    out["charge_per_month"] = df["monthly_charges"]
-    out["services_count"] = df[SERVICE_COLS].apply(
-        lambda row: sum(v not in ("No", "No phone service", "No internet service") for v in row),
-        axis=1,
-    )
-    out["contract_risk_score"] = df["contract"].map(CONTRACT_RISK).fillna(2).astype(int)
-    out["payment_risk_score"] = df["payment_method"].map(PAYMENT_RISK).fillna(2).astype(int)
-    out["churn_label"] = (df["churn"].str.lower() == "yes").astype(int)
-    out["churn_probability"] = None
-    out["risk_segment"] = None
-    return out
+    def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
 
+        str_cols = df.select_dtypes(include="object").columns
+        df[str_cols] = df[str_cols].apply(lambda s: s.str.strip())
 
-def run() -> None:
-    engine = get_engine()
-    df = pd.read_sql("SELECT * FROM raw_customers", engine)
-    processed = engineer(df)
-    processed.to_sql("processed_customers", engine, if_exists="replace", index=False)
-    print(f"Processed {len(processed)} rows into processed_customers.")
+        for col in NUMERIC_COLS:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        df[NUMERIC_COLS] = df[NUMERIC_COLS].fillna(df[NUMERIC_COLS].median())
 
+        df[CATEGORICAL_COLS] = df[CATEGORICAL_COLS].fillna("Unknown")
 
-if __name__ == "__main__":
-    run()
+        return df
+
+    def encode_categoricals(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+
+        self.encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+        encoded = self.encoder.fit_transform(df[CATEGORICAL_COLS])
+        encoded_df = pd.DataFrame(
+            encoded,
+            columns=self.encoder.get_feature_names_out(CATEGORICAL_COLS),
+            index=df.index,
+        )
+
+        df = df.drop(columns=CATEGORICAL_COLS)
+        return pd.concat([df, encoded_df], axis=1)
+
+    def scale_numerics(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+
+        self.scaler = StandardScaler()
+        df[NUMERIC_COLS] = self.scaler.fit_transform(df[NUMERIC_COLS])
+
+        return df

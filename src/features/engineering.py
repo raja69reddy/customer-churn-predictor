@@ -1,7 +1,13 @@
 """Feature engineering — builds engineered features from raw_customers for modeling."""
+import os
+
+import joblib
 import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.utils.db import get_engine
@@ -39,6 +45,7 @@ class FeatureEngineer:
     def __init__(self):
         self.encoder = None
         self.scaler = None
+        self.pipeline = None
 
     def load_raw_data(self) -> pd.DataFrame:
         engine = get_engine()
@@ -133,3 +140,35 @@ class FeatureEngineer:
         print(pd.Series(y_resampled).value_counts())
 
         return X_resampled, y_resampled
+
+    def build_preprocessing_pipeline(self) -> ColumnTransformer:
+        numeric_pipeline = Pipeline(steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ])
+
+        categorical_pipeline = Pipeline(steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("encoder", OneHotEncoder(handle_unknown="ignore")),
+        ])
+
+        self.pipeline = ColumnTransformer(transformers=[
+            ("numeric", numeric_pipeline, NUMERIC_COLS),
+            ("categorical", categorical_pipeline, CATEGORICAL_COLS),
+        ])
+        return self.pipeline
+
+    def fit_transform(self, df: pd.DataFrame):
+        if self.pipeline is None:
+            self.build_preprocessing_pipeline()
+        return self.pipeline.fit_transform(df)
+
+    def save_pipeline(self, path: str = "models/preprocessor.pkl") -> None:
+        if self.pipeline is None:
+            raise ValueError("No fitted pipeline to save — call fit_transform() first.")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        joblib.dump(self.pipeline, path)
+
+    def load_pipeline(self, path: str = "models/preprocessor.pkl") -> ColumnTransformer:
+        self.pipeline = joblib.load(path)
+        return self.pipeline

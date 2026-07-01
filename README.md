@@ -118,6 +118,18 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Created vw_churn_overview.sql and vw_high_risk.sql views
 - All unit tests passing with pytest
 
+✅ **Day 3 — Exploratory Data Analysis**
+- Created notebooks/01_eda.ipynb with 7 analysis sections
+- Analyzed churn distribution — 26% churn rate confirmed
+- Analyzed all numeric features: tenure, monthly charges, total charges
+- Analyzed all categorical features with churn breakdown
+- Created correlation heatmap — tenure most negatively correlated with churn
+- Key insights: month-to-month contracts 43% churn, tenure < 12 months highest risk
+- Created src/data/eda_summary.py automated summary script
+- Updated vw_churn_overview.sql with tenure and charge tier breakdowns
+- Created vw_churn_by_features.sql view
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

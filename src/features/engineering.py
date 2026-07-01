@@ -10,6 +10,14 @@ NUMERIC_COLS = ["tenure", "monthly_charges", "total_charges"]
 TENURE_BINS = [0, 12, 24, 48, np.inf]
 TENURE_LABELS = ["New Customer", "Growing Customer", "Established Customer", "Loyal Customer"]
 
+CONTRACT_RISK = {"Month-to-month": 3, "One year": 2, "Two year": 1}
+PAYMENT_RISK = {
+    "Electronic check": 3,
+    "Mailed check": 2,
+    "Bank transfer (automatic)": 1,
+    "Credit card (automatic)": 1,
+}
+
 CATEGORICAL_COLS = [
     "gender", "partner", "dependents", "phone_service", "multiple_lines",
     "internet_service", "online_security", "online_backup", "device_protection",
@@ -96,4 +104,19 @@ class FeatureEngineer:
             + (df["streaming_tv"] == "Yes").astype(int)
             + (df["streaming_movies"] == "Yes").astype(int)
         )
+        return df
+
+    def create_contract_risk_score(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df["contract_risk_score"] = df["contract"].map(CONTRACT_RISK).astype(int)
+        return df
+
+    def create_payment_risk_score(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df["payment_risk_score"] = df["payment_method"].map(PAYMENT_RISK).astype(int)
+        return df
+
+    def create_churn_label(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df["churn_label"] = (df["churn"] == "Yes").astype(int)
         return df

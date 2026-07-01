@@ -1,6 +1,7 @@
 """Feature engineering — builds engineered features from raw_customers for modeling."""
 import numpy as np
 import pandas as pd
+from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.utils.db import get_engine
@@ -120,3 +121,15 @@ class FeatureEngineer:
         df = df.copy()
         df["churn_label"] = (df["churn"] == "Yes").astype(int)
         return df
+
+    def apply_smote(self, X: pd.DataFrame, y: pd.Series, random_state: int = 42):
+        print("Class distribution before SMOTE:")
+        print(y.value_counts())
+
+        smote = SMOTE(random_state=random_state)
+        X_resampled, y_resampled = smote.fit_resample(X, y)
+
+        print("\nClass distribution after SMOTE:")
+        print(pd.Series(y_resampled).value_counts())
+
+        return X_resampled, y_resampled

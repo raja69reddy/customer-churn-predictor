@@ -54,7 +54,7 @@ class FeatureEngineer:
     def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
 
-        str_cols = df.select_dtypes(include="object").columns
+        str_cols = df.select_dtypes(include=["object", "str"]).columns
         df[str_cols] = df[str_cols].apply(lambda s: s.str.strip())
 
         for col in NUMERIC_COLS:

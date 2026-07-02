@@ -11,6 +11,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
 
 from src.utils.db import get_engine
 
@@ -126,4 +127,22 @@ class ModelTrainer:
         plt.close()
 
         self.save_model(model, "random_forest")
+        return model
+
+    def train_xgboost(self):
+        model = XGBClassifier(
+            n_estimators=100,
+            max_depth=5,
+            learning_rate=0.1,
+            use_label_encoder=False,
+            eval_metric="logloss",
+            random_state=42,
+        )
+        model.fit(self.X_train, self.y_train)
+
+        y_pred = model.predict(self.X_test)
+        y_proba = model.predict_proba(self.X_test)[:, 1]
+        self._print_metrics("XGBoost", self.y_test, y_pred, y_proba)
+
+        self.save_model(model, "xgboost")
         return model

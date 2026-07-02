@@ -123,8 +123,8 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Analyzed churn distribution — 26% churn rate confirmed
 - Analyzed all numeric features: tenure, monthly charges, total charges
 - Analyzed all categorical features with churn breakdown
-- Created correlation heatmap — tenure most negatively correlated with churn
-- Key insights: month-to-month contracts 43% churn, tenure < 12 months highest risk
+- Created correlation heatmap
+- Key insights: month-to-month contracts 43% churn
 - Created src/data/eda_summary.py automated summary script
 - Updated vw_churn_overview.sql with tenure and charge tier breakdowns
 - Created vw_churn_by_features.sql view
@@ -141,6 +141,18 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Created notebooks/02_feature_analysis.ipynb
 - Updated vw_high_risk.sql with engineered features
 - Created vw_feature_importance.sql view
+- All unit tests passing with pytest
+
+✅ **Day 5 — Baseline ML Models**
+- Trained 4 models: Logistic Regression, Decision Tree, Random Forest, XGBoost
+- Created ModelTrainer class with save/load functionality
+- Created ModelEvaluator with ROC curves and confusion matrices
+- Generated model comparison table (accuracy, AUC, F1, precision, recall)
+- Plotted ROC curves for all 4 models on single chart
+- Plotted confusion matrices in 2x2 grid
+- Logged all results to model_registry PostgreSQL table
+- Best model identified and set as active
+- Created vw_model_performance.sql view
 - All unit tests passing with pytest
 
 ## Future Work

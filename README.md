@@ -130,6 +130,19 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Created vw_churn_by_features.sql view
 - All unit tests passing with pytest
 
+✅ **Day 4 — Feature Engineering**
+- Created src/features/engineering.py with FeatureEngineer class
+- Engineered 3 new features: tenure_group, charge_per_month, services_count
+- Added contract_risk_score and payment_risk_score features
+- Converted churn Yes/No to binary label (0/1)
+- Applied SMOTE oversampling — balanced 26% churn to 50/50
+- Built sklearn preprocessing pipeline with imputer + scaler + encoder
+- Saved preprocessor to models/preprocessor.pkl
+- Created notebooks/02_feature_analysis.ipynb
+- Updated vw_high_risk.sql with engineered features
+- Created vw_feature_importance.sql view
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

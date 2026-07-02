@@ -3,7 +3,10 @@ import os
 
 import joblib
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
 from src.utils.db import get_engine
 
@@ -57,3 +60,38 @@ class ModelTrainer:
     def load_model(self, name: str):
         path = os.path.join("models", f"{name}.pkl")
         return joblib.load(path)
+
+    def _print_metrics(self, model_name: str, y_true, y_pred, y_proba) -> dict:
+        metrics = {
+            "accuracy": accuracy_score(y_true, y_pred),
+            "auc": roc_auc_score(y_true, y_proba),
+            "f1": f1_score(y_true, y_pred),
+            "precision": precision_score(y_true, y_pred),
+            "recall": recall_score(y_true, y_pred),
+        }
+        print(f"\n{model_name} metrics:")
+        for key, value in metrics.items():
+            print(f"    {key}: {value:.4f}")
+        return metrics
+
+    def train_logistic_regression(self):
+        model = LogisticRegression(max_iter=1000)
+        model.fit(self.X_train, self.y_train)
+
+        y_pred = model.predict(self.X_test)
+        y_proba = model.predict_proba(self.X_test)[:, 1]
+        self._print_metrics("Logistic Regression", self.y_test, y_pred, y_proba)
+
+        self.save_model(model, "logistic_regression")
+        return model
+
+    def train_decision_tree(self):
+        model = DecisionTreeClassifier(max_depth=5, random_state=42)
+        model.fit(self.X_train, self.y_train)
+
+        y_pred = model.predict(self.X_test)
+        y_proba = model.predict_proba(self.X_test)[:, 1]
+        self._print_metrics("Decision Tree", self.y_test, y_pred, y_proba)
+
+        self.save_model(model, "decision_tree")
+        return model

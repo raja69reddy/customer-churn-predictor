@@ -2,7 +2,11 @@
 import os
 
 import joblib
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -94,4 +98,32 @@ class ModelTrainer:
         self._print_metrics("Decision Tree", self.y_test, y_pred, y_proba)
 
         self.save_model(model, "decision_tree")
+        return model
+
+    def train_random_forest(self):
+        model = RandomForestClassifier(n_estimators=100, random_state=42)
+        model.fit(self.X_train, self.y_train)
+
+        y_pred = model.predict(self.X_test)
+        y_proba = model.predict_proba(self.X_test)[:, 1]
+        self._print_metrics("Random Forest", self.y_test, y_pred, y_proba)
+
+        importance = pd.Series(model.feature_importances_, index=self.get_feature_columns())
+        importance = importance.sort_values(ascending=False)
+        top15 = importance.head(15)
+
+        os.makedirs("data/processed", exist_ok=True)
+        top15.rename("importance").rename_axis("feature").to_csv(
+            "data/processed/rf_feature_importance.csv"
+        )
+
+        plt.figure(figsize=(8, max(4, len(top15) * 0.4)))
+        plt.barh(top15.index[::-1], top15.values[::-1], color="steelblue")
+        plt.title("Random Forest - Top 15 Feature Importances")
+        plt.xlabel("Importance")
+        plt.tight_layout()
+        plt.savefig("data/processed/rf_feature_importance.png")
+        plt.close()
+
+        self.save_model(model, "random_forest")
         return model

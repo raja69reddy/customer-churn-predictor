@@ -1,5 +1,14 @@
 # Changelog
 
+## Day 5 — Baseline ML Models
+- Trained 4 baseline models: LR, Decision Tree, Random Forest, XGBoost
+- Created ModelTrainer and ModelEvaluator classes
+- Generated model comparison table
+- Plotted ROC curves and confusion matrices
+- Logged all results to model_registry table
+- Best model identified by AUC score
+- All tests passing
+
 ## Day 4 — Feature Engineering
 - Created FeatureEngineer class with full pipeline
 - Engineered features: tenure_group, charge_per_month, services_count

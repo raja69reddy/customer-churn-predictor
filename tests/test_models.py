@@ -60,7 +60,11 @@ def test_model_auc_above_0_75(trainer, models):
 
 
 def test_model_registry_has_4_entries(registry):
-    assert len(registry) == 4, f"Expected 4 model_registry entries, found {len(registry)}"
+    # Day 6 tuning adds extra rows (e.g. random_forest_tuned, xgboost_tuned) on top of the
+    # 4 Day 5 baseline models, so the registry grows over time — check the baseline floor instead
+    # of an exact count.
+    assert len(registry) >= 4, f"Expected at least 4 model_registry entries, found {len(registry)}"
+    assert set(MODEL_NAMES).issubset(set(registry["model_name"])), "Missing one or more baseline models in model_registry"
 
 
 def test_best_model_has_is_active_true(registry):

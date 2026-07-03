@@ -1,6 +1,7 @@
 """Model evaluation — metrics, ROC curves, confusion matrices, and comparison reports."""
 import os
 
+import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -15,6 +16,7 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
+from sklearn.model_selection import StratifiedKFold, cross_validate
 
 
 class ModelEvaluator:
@@ -98,3 +100,37 @@ class ModelEvaluator:
             results.to_csv(filename, index=False)
         else:
             pd.DataFrame(results).to_csv(filename, index=False)
+
+    def cross_validate_model(self, model, X, y, cv: int = 5) -> dict:
+        skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
+        scores = cross_validate(
+            model, X, y, cv=skf,
+            scoring=["accuracy", "roc_auc", "f1"],
+        )
+
+        cv_results = {
+            "accuracy": scores["test_accuracy"],
+            "auc": scores["test_roc_auc"],
+            "f1": scores["test_f1"],
+        }
+
+        print(f"Cross validation results ({cv}-fold stratified):")
+        for metric, values in cv_results.items():
+            print(f"    {metric}: mean={values.mean():.4f}  std={values.std():.4f}")
+
+        return cv_results
+
+    def plot_cv_results(self, cv_results: dict, model_name: str, save_path: str = "data/processed/cv_results.png"):
+        fig, ax = plt.subplots(figsize=(7, 5))
+        labels = list(cv_results.keys())
+        data = [cv_results[label] for label in labels]
+
+        ax.boxplot(data, tick_labels=labels)
+        ax.set_title(f"Cross Validation Scores - {model_name}")
+        ax.set_ylabel("Score")
+
+        plt.tight_layout()
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
+        plt.close(fig)
+        return save_path

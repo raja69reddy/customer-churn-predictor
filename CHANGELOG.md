@@ -1,5 +1,15 @@
 # Changelog
 
+## Day 6 — Model Evaluation & Hyperparameter Tuning
+- Added 5-fold cross validation for all models
+- GridSearchCV tuning for Random Forest and XGBoost
+- SHAP values analysis — top 15 features identified
+- Precision-recall curve analysis
+- Found optimal classification threshold
+- Created notebooks/03_model_analysis.ipynb
+- Built ChurnPredictor class with risk segmentation
+- All tests passing
+
 ## Day 5 — Baseline ML Models
 - Trained 4 baseline models: LR, Decision Tree, Random Forest, XGBoost
 - Created ModelTrainer and ModelEvaluator classes

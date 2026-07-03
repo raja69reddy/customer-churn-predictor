@@ -12,6 +12,7 @@ from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
     f1_score,
+    precision_recall_curve,
     precision_score,
     recall_score,
     roc_auc_score,
@@ -177,3 +178,32 @@ class ModelEvaluator:
             print(f"    {rank}. {feature}: {value:.4f}")
 
         return ranking
+
+    def plot_precision_recall_curve(
+        self, model, X_test, y_test, model_name: str = "model",
+        save_path: str = "data/processed/precision_recall_curve.png",
+    ):
+        y_proba = model.predict_proba(X_test)[:, 1]
+        precision, recall, thresholds = precision_recall_curve(y_test, y_proba)
+
+        f1_scores = 2 * precision * recall / (precision + recall + 1e-12)
+        best_idx = f1_scores[:-1].argmax()
+        best_threshold = thresholds[best_idx]
+
+        fig, ax = plt.subplots(figsize=(7, 6))
+        ax.plot(recall, precision, label=f"{model_name}")
+        ax.scatter(
+            recall[best_idx], precision[best_idx], color="red", zorder=5,
+            label=f"Optimal threshold = {best_threshold:.2f} (F1 = {f1_scores[best_idx]:.3f})",
+        )
+        ax.set_xlabel("Recall")
+        ax.set_ylabel("Precision")
+        ax.set_title(f"Precision-Recall Curve - {model_name}")
+        ax.legend(loc="lower left")
+
+        plt.tight_layout()
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
+        plt.close(fig)
+
+        return {"precision": precision, "recall": recall, "thresholds": thresholds, "best_threshold": best_threshold}

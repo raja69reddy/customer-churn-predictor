@@ -7,6 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import shap
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -134,3 +135,45 @@ class ModelEvaluator:
         plt.savefig(save_path)
         plt.close(fig)
         return save_path
+
+    def explain_model(self, model, X_test, save_dir: str = "data/processed/shap_plots"):
+        os.makedirs(save_dir, exist_ok=True)
+
+        X_test = X_test.astype(float)
+        try:
+            explainer = shap.TreeExplainer(model, feature_perturbation="tree_path_dependent")
+        except Exception:
+            explainer = shap.Explainer(model, X_test)
+        shap_values = explainer(X_test)
+
+        plt.figure()
+        shap.summary_plot(shap_values, X_test, show=False)
+        plt.tight_layout()
+        plt.savefig(os.path.join(save_dir, "shap_summary_beeswarm.png"), bbox_inches="tight")
+        plt.close()
+
+        plt.figure()
+        shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
+        plt.tight_layout()
+        plt.savefig(os.path.join(save_dir, "shap_bar.png"), bbox_inches="tight")
+        plt.close()
+
+        return shap_values
+
+    def get_top_features(self, shap_values, n: int = 15) -> pd.Series:
+        values = shap_values.values if hasattr(shap_values, "values") else np.asarray(shap_values)
+        if values.ndim == 3:
+            values = values[:, :, -1]
+
+        feature_names = getattr(shap_values, "feature_names", None)
+        if feature_names is None:
+            feature_names = [f"feature_{i}" for i in range(values.shape[1])]
+
+        mean_abs_shap = np.abs(values).mean(axis=0)
+        ranking = pd.Series(mean_abs_shap, index=feature_names).sort_values(ascending=False).head(n)
+
+        print(f"Top {len(ranking)} features by mean |SHAP value|:")
+        for rank, (feature, value) in enumerate(ranking.items(), start=1):
+            print(f"    {rank}. {feature}: {value:.4f}")
+
+        return ranking

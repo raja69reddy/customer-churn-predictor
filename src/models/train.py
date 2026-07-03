@@ -174,3 +174,35 @@ class ModelTrainer:
 
         self.save_model(best_model, "random_forest_tuned")
         return best_model, grid_search.best_params_
+
+    def tune_xgboost(self):
+        param_grid = {
+            "n_estimators": [100, 200, 300],
+            "max_depth": [3, 5, 7],
+            "learning_rate": [0.01, 0.1, 0.2],
+            "subsample": [0.8, 1.0],
+            "colsample_bytree": [0.8, 1.0],
+        }
+
+        grid_search = GridSearchCV(
+            XGBClassifier(
+                use_label_encoder=False, eval_metric="logloss",
+                random_state=42, n_jobs=1,
+            ),
+            param_grid=param_grid,
+            cv=5,
+            scoring="roc_auc",
+            n_jobs=-1,
+        )
+        grid_search.fit(self.X_train, self.y_train)
+
+        print(f"XGBoost best params: {grid_search.best_params_}")
+        print(f"XGBoost best CV AUC: {grid_search.best_score_:.4f}")
+
+        best_model = grid_search.best_estimator_
+        y_pred = best_model.predict(self.X_test)
+        y_proba = best_model.predict_proba(self.X_test)[:, 1]
+        self._print_metrics("XGBoost (tuned)", self.y_test, y_pred, y_proba)
+
+        self.save_model(best_model, "xgboost_tuned")
+        return best_model, grid_search.best_params_

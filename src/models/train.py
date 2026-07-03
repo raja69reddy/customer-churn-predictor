@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
@@ -146,3 +146,31 @@ class ModelTrainer:
 
         self.save_model(model, "xgboost")
         return model
+
+    def tune_random_forest(self):
+        param_grid = {
+            "n_estimators": [100, 200, 300],
+            "max_depth": [3, 5, 7, None],
+            "min_samples_split": [2, 5, 10],
+            "min_samples_leaf": [1, 2, 4],
+        }
+
+        grid_search = GridSearchCV(
+            RandomForestClassifier(random_state=42),
+            param_grid=param_grid,
+            cv=5,
+            scoring="roc_auc",
+            n_jobs=-1,
+        )
+        grid_search.fit(self.X_train, self.y_train)
+
+        print(f"Random Forest best params: {grid_search.best_params_}")
+        print(f"Random Forest best CV AUC: {grid_search.best_score_:.4f}")
+
+        best_model = grid_search.best_estimator_
+        y_pred = best_model.predict(self.X_test)
+        y_proba = best_model.predict_proba(self.X_test)[:, 1]
+        self._print_metrics("Random Forest (tuned)", self.y_test, y_pred, y_proba)
+
+        self.save_model(best_model, "random_forest_tuned")
+        return best_model, grid_search.best_params_

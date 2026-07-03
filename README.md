@@ -155,6 +155,19 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Created vw_model_performance.sql view
 - All unit tests passing with pytest
 
+✅ **Day 6 — Model Evaluation & Hyperparameter Tuning**
+- Added 5-fold stratified cross validation for all 4 models
+- GridSearchCV tuning for Random Forest — best params found
+- GridSearchCV tuning for XGBoost — best params found
+- Compared tuned vs baseline models — AUC improved
+- SHAP values analysis — top 15 churn drivers identified
+- Precision-recall curve analysis
+- Found optimal classification threshold
+- Created notebooks/03_model_analysis.ipynb
+- Built ChurnPredictor class with High/Medium/Low risk segments
+- Tested ChurnPredictor with 5 sample customers
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

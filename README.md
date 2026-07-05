@@ -168,6 +168,18 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Tested ChurnPredictor with 5 sample customers
 - All unit tests passing with pytest
 
+✅ **Day 7 — Advanced ML + LightGBM + Ensemble**
+- Trained LightGBM model — compared with XGBoost
+- Built ensemble model using VotingClassifier with soft voting
+- Generated final model leaderboard with all 6 models
+- Selected best model by AUC score and registered in DB
+- Added GPT-powered churn explanation to ChurnPredictor
+- Tested GPT explanations with 3 high risk customer profiles
+- Created batch_scorer.py — scored all 7,043 customers
+- Saved all predictions to churn_predictions table
+- Created vw_churn_predictions.sql and vw_risk_segments.sql
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

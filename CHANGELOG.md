@@ -1,5 +1,15 @@
 # Changelog
 
+## Day 7 — Advanced ML + LightGBM + Ensemble
+- Trained LightGBM model
+- Built ensemble model with soft voting
+- Generated final model leaderboard (6 models)
+- Selected and registered best model
+- Added GPT explanation to ChurnPredictor
+- Created batch_scorer.py — scored all 7,043 customers
+- Created vw_churn_predictions.sql and vw_risk_segments.sql
+- All tests passing
+
 ## Day 6 — Model Evaluation & Hyperparameter Tuning
 - Added 5-fold cross validation for all models
 - GridSearchCV tuning for Random Forest and XGBoost

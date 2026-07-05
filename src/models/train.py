@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 from lightgbm import LGBMClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -226,3 +226,44 @@ class ModelTrainer:
 
         self.save_model(model, "lightgbm")
         return model
+
+    def train_ensemble(self):
+        xgb_model = self.load_model("xgboost_tuned")
+        lgbm_model = self.load_model("lightgbm")
+        rf_model = self.load_model("random_forest_tuned")
+
+        ensemble = VotingClassifier(
+            estimators=[
+                ("xgboost", xgb_model),
+                ("lightgbm", lgbm_model),
+                ("random_forest", rf_model),
+            ],
+            voting="soft",
+        )
+        ensemble.fit(self.X_train, self.y_train)
+
+        y_pred = ensemble.predict(self.X_test)
+        y_proba = ensemble.predict_proba(self.X_test)[:, 1]
+        ensemble_metrics = self._print_metrics("Ensemble (soft voting)", self.y_test, y_pred, y_proba)
+
+        print("\nComparison with individual models:")
+        individuals = [
+            ("xgboost_tuned", xgb_model),
+            ("lightgbm", lgbm_model),
+            ("random_forest_tuned", rf_model),
+        ]
+        for name, model in individuals:
+            y_pred_i = model.predict(self.X_test)
+            y_proba_i = model.predict_proba(self.X_test)[:, 1]
+            print(
+                f"    {name:<22} accuracy={accuracy_score(self.y_test, y_pred_i):.4f}  "
+                f"auc={roc_auc_score(self.y_test, y_proba_i):.4f}  "
+                f"f1={f1_score(self.y_test, y_pred_i):.4f}"
+            )
+        print(
+            f"    {'ensemble':<22} accuracy={ensemble_metrics['accuracy']:.4f}  "
+            f"auc={ensemble_metrics['auc']:.4f}  f1={ensemble_metrics['f1']:.4f}"
+        )
+
+        self.save_model(ensemble, "ensemble")
+        return ensemble

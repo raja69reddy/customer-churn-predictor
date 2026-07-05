@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
+from lightgbm import LGBMClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
@@ -206,3 +207,22 @@ class ModelTrainer:
 
         self.save_model(best_model, "xgboost_tuned")
         return best_model, grid_search.best_params_
+
+    def train_lightgbm(self):
+        model = LGBMClassifier(
+            n_estimators=200,
+            max_depth=5,
+            learning_rate=0.05,
+            num_leaves=31,
+            class_weight="balanced",
+            random_state=42,
+            verbose=-1,
+        )
+        model.fit(self.X_train, self.y_train)
+
+        y_pred = model.predict(self.X_test)
+        y_proba = model.predict_proba(self.X_test)[:, 1]
+        self._print_metrics("LightGBM", self.y_test, y_pred, y_proba)
+
+        self.save_model(model, "lightgbm")
+        return model

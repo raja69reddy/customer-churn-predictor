@@ -1,10 +1,14 @@
 """Baseline model training — loads processed_customers and trains classifiers."""
 import os
+from datetime import datetime
 
 import joblib
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import mlflow
+import mlflow.sklearn
+import numpy as np
 import pandas as pd
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
@@ -14,6 +18,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
+from src.models import mlflow_setup
 from src.utils.db import get_engine
 
 TARGET_COLUMN = "churn_label"
@@ -80,26 +85,87 @@ class ModelTrainer:
             print(f"    {key}: {value:.4f}")
         return metrics
 
+    def _feature_importance_series(self, model):
+        if hasattr(model, "feature_importances_"):
+            return pd.Series(model.feature_importances_, index=self.get_feature_columns())
+        if hasattr(model, "coef_"):
+            return pd.Series(np.abs(model.coef_[0]), index=self.get_feature_columns())
+        if hasattr(model, "estimators_"):
+            importances = [
+                est.feature_importances_ for est in model.estimators_
+                if hasattr(est, "feature_importances_")
+            ]
+            if importances:
+                return pd.Series(np.mean(importances, axis=0), index=self.get_feature_columns())
+        return None
+
+    def _plot_feature_importance(self, model, model_name: str):
+        importance = self._feature_importance_series(model)
+        if importance is None:
+            return None
+
+        importance = importance.sort_values(ascending=False)
+        top15 = importance.head(15)
+
+        os.makedirs("data/processed", exist_ok=True)
+        safe_name = model_name.lower().replace(" ", "_")
+        path = f"data/processed/{safe_name}_feature_importance.png"
+
+        plt.figure(figsize=(8, max(4, len(top15) * 0.4)))
+        plt.barh(top15.index[::-1], top15.values[::-1], color="steelblue")
+        plt.title(f"{model_name} - Feature Importance")
+        plt.xlabel("Importance")
+        plt.tight_layout()
+        plt.savefig(path)
+        plt.close()
+        return path
+
+    def _log_mlflow_run(self, model_name: str, params: dict, metrics: dict, model) -> str:
+        mlflow_setup.setup_experiment()
+
+        with mlflow.start_run(run_name=model_name):
+            mlflow.log_params(params)
+            mlflow.log_metrics(metrics)
+            mlflow.set_tags({
+                "model_type": model_name,
+                "dataset_size": len(self.X_train) + len(self.X_test),
+                "date": datetime.now().strftime("%Y-%m-%d"),
+            })
+            mlflow.sklearn.log_model(model, artifact_path="model")
+
+            importance_path = self._plot_feature_importance(model, model_name)
+            if importance_path:
+                mlflow.log_artifact(importance_path)
+
+            run_id = mlflow.active_run().info.run_id
+
+        print(f"Logged MLflow run for {model_name}: {run_id}")
+        return run_id
+
     def train_logistic_regression(self):
-        model = LogisticRegression(max_iter=1000)
+        params = {"max_iter": 1000}
+        model = LogisticRegression(**params)
         model.fit(self.X_train, self.y_train)
 
         y_pred = model.predict(self.X_test)
         y_proba = model.predict_proba(self.X_test)[:, 1]
-        self._print_metrics("Logistic Regression", self.y_test, y_pred, y_proba)
+        metrics = self._print_metrics("Logistic Regression", self.y_test, y_pred, y_proba)
 
         self.save_model(model, "logistic_regression")
+        self._log_mlflow_run("Logistic Regression", params, metrics, model)
         return model
 
     def train_decision_tree(self):
-        model = DecisionTreeClassifier(max_depth=5, random_state=42)
+        params = {"max_depth": 5, "random_state": 42}
+        model = DecisionTreeClassifier(**params)
         model.fit(self.X_train, self.y_train)
 
         y_pred = model.predict(self.X_test)
         y_proba = model.predict_proba(self.X_test)[:, 1]
-        self._print_metrics("Decision Tree", self.y_test, y_pred, y_proba)
+        metrics = self._print_metrics("Decision Tree", self.y_test, y_pred, y_proba)
 
         self.save_model(model, "decision_tree")
+        self._log_mlflow_run("Decision Tree", params, metrics, model)
         return model
 
     def train_random_forest(self):
@@ -171,9 +237,10 @@ class ModelTrainer:
         best_model = grid_search.best_estimator_
         y_pred = best_model.predict(self.X_test)
         y_proba = best_model.predict_proba(self.X_test)[:, 1]
-        self._print_metrics("Random Forest (tuned)", self.y_test, y_pred, y_proba)
+        metrics = self._print_metrics("Random Forest (tuned)", self.y_test, y_pred, y_proba)
 
         self.save_model(best_model, "random_forest_tuned")
+        self._log_mlflow_run("Random Forest (tuned)", grid_search.best_params_, metrics, best_model)
         return best_model, grid_search.best_params_
 
     def tune_xgboost(self):
@@ -203,28 +270,31 @@ class ModelTrainer:
         best_model = grid_search.best_estimator_
         y_pred = best_model.predict(self.X_test)
         y_proba = best_model.predict_proba(self.X_test)[:, 1]
-        self._print_metrics("XGBoost (tuned)", self.y_test, y_pred, y_proba)
+        metrics = self._print_metrics("XGBoost (tuned)", self.y_test, y_pred, y_proba)
 
         self.save_model(best_model, "xgboost_tuned")
+        self._log_mlflow_run("XGBoost (tuned)", grid_search.best_params_, metrics, best_model)
         return best_model, grid_search.best_params_
 
     def train_lightgbm(self):
-        model = LGBMClassifier(
-            n_estimators=200,
-            max_depth=5,
-            learning_rate=0.05,
-            num_leaves=31,
-            class_weight="balanced",
-            random_state=42,
-            verbose=-1,
-        )
+        params = {
+            "n_estimators": 200,
+            "max_depth": 5,
+            "learning_rate": 0.05,
+            "num_leaves": 31,
+            "class_weight": "balanced",
+            "random_state": 42,
+            "verbose": -1,
+        }
+        model = LGBMClassifier(**params)
         model.fit(self.X_train, self.y_train)
 
         y_pred = model.predict(self.X_test)
         y_proba = model.predict_proba(self.X_test)[:, 1]
-        self._print_metrics("LightGBM", self.y_test, y_pred, y_proba)
+        metrics = self._print_metrics("LightGBM", self.y_test, y_pred, y_proba)
 
         self.save_model(model, "lightgbm")
+        self._log_mlflow_run("LightGBM", params, metrics, model)
         return model
 
     def train_ensemble(self):
@@ -266,4 +336,10 @@ class ModelTrainer:
         )
 
         self.save_model(ensemble, "ensemble")
+        self._log_mlflow_run(
+            "Ensemble",
+            {"voting": "soft", "estimators": "xgboost_tuned,lightgbm,random_forest_tuned"},
+            ensemble_metrics,
+            ensemble,
+        )
         return ensemble

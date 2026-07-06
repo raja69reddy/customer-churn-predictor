@@ -54,7 +54,10 @@ class FeatureEngineer:
     def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
 
-        str_cols = df.select_dtypes(include=["object", "str"]).columns
+        # Avoid select_dtypes(include=["object", "str"]) here — combining "object" and "str"
+        # raises TypeError on pandas 2.x, while pandas 3.x's new string backend needs "str"
+        # explicitly. A manual dtype check works identically across both.
+        str_cols = [c for c in df.columns if df[c].dtype == object or df[c].dtype.name == "str"]
         df[str_cols] = df[str_cols].apply(lambda s: s.str.strip())
 
         for col in NUMERIC_COLS:

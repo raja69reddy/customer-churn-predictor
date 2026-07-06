@@ -180,6 +180,17 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Created vw_churn_predictions.sql and vw_risk_segments.sql
 - All unit tests passing with pytest
 
+✅ **Day 8 — MLflow Experiment Tracking**
+- Set up MLflow experiment tracking infrastructure
+- Retrained all 6 models with full MLflow logging
+- Logged params, metrics, and artifacts for each run
+- Registered best model in MLflow Model Registry
+- Created model versioning system — v1 vs v2 comparison
+- Created src/models/experiment_analyzer.py
+- Updated batch_scorer.py to load from MLflow registry
+- Created mlflow/README.md documentation
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

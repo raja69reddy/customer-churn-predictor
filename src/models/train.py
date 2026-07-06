@@ -131,7 +131,10 @@ class ModelTrainer:
                 "dataset_size": len(self.X_train) + len(self.X_test),
                 "date": datetime.now().strftime("%Y-%m-%d"),
             })
-            mlflow.sklearn.log_model(model, artifact_path="model")
+            # cloudpickle (not the default skops format) is needed because skops does not
+            # trust third-party estimator types like XGBClassifier/LGBMClassifier/VotingClassifier
+            # wrapping them out of the box.
+            mlflow.sklearn.log_model(model, artifact_path="model", serialization_format="cloudpickle")
 
             importance_path = self._plot_feature_importance(model, model_name)
             if importance_path:

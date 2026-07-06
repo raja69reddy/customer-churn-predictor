@@ -1,5 +1,14 @@
 # Changelog
 
+## Day 8 — MLflow Experiment Tracking
+- Set up MLflow experiment tracking
+- Logged all 6 model runs with params and metrics
+- Registered best model in MLflow Model Registry
+- Created model versioning system (v1 vs v2)
+- Created experiment_analyzer.py
+- Updated batch_scorer to use MLflow registry
+- All tests passing
+
 ## Day 7 — Advanced ML + LightGBM + Ensemble
 - Trained LightGBM model
 - Built ensemble model with soft voting

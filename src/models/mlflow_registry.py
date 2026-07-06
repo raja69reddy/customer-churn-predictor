@@ -1,6 +1,7 @@
 """MLflow Model Registry operations — register, promote, and compare churn model runs."""
 import pandas as pd
 import mlflow
+import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 
 from src.models import mlflow_setup
@@ -49,8 +50,10 @@ def promote_to_production(model_name: str = REGISTERED_MODEL_NAME, version: str 
 
 
 def get_production_model(model_name: str = REGISTERED_MODEL_NAME):
+    """Loads the Production model version with its native sklearn/xgboost/lightgbm interface
+    intact (predict_proba etc.), rather than the generic mlflow.pyfunc wrapper."""
     mlflow_setup.configure_tracking()
-    model = mlflow.pyfunc.load_model(f"models:/{model_name}/Production")
+    model = mlflow.sklearn.load_model(f"models:/{model_name}/Production")
     return model
 
 

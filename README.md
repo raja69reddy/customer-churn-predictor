@@ -203,6 +203,19 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Updated churn_predictions table with new columns
 - All unit tests passing with pytest
 
+✅ **Day 10 — Streamlit Dashboard Complete**
+- Created dashboard/app.py with sidebar filters
+- Created metrics.py and charts.py reusable components
+- Created 5 dashboard pages:
+  * Overview — churn rate, KPIs, distributions
+  * Predictions — risk segments, probability histogram
+  * Customer Lookup — individual prediction + AI explanation
+  * Model Performance — ROC curves, SHAP, feature importance
+  * Retention Targeting — priority tiers, recommended actions
+- Added caching, loading spinners, error handling
+- All 5 pages verified working on localhost:8501
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

@@ -1,5 +1,15 @@
 # Changelog
 
+## Day 10 — Streamlit Dashboard
+- Created dashboard/app.py main entry point
+- Created metrics.py and charts.py components
+- Created 5 dashboard pages:
+  1_overview, 2_predictions, 3_customer_lookup,
+  4_model_performance, 5_retention
+- Added caching, spinners, error handling
+- All pages verified working
+- All tests passing
+
 ## Day 9 — Batch Prediction Pipeline
 - Updated batch_scorer.py with production flags
 - Created prediction_monitor.py for quality checks

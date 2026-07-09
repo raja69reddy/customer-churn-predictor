@@ -44,12 +44,18 @@ CREATE TABLE IF NOT EXISTS processed_customers (
 
 -- 3. Model prediction log
 CREATE TABLE IF NOT EXISTS churn_predictions (
-    id                SERIAL PRIMARY KEY,
-    customer_id       VARCHAR,
-    churn_probability FLOAT,
-    risk_segment      VARCHAR(20),
-    model_version     VARCHAR(20),
-    predicted_at      TIMESTAMP DEFAULT NOW()
+    id                         SERIAL PRIMARY KEY,
+    customer_id                VARCHAR,
+    churn_probability          FLOAT,
+    risk_segment                VARCHAR(20),
+    model_version               VARCHAR(20),
+    predicted_at                 TIMESTAMP DEFAULT NOW(),
+    -- Day 9: retention targeting + monitoring columns
+    -- (backfilled by src/models/update_prediction_schema.py)
+    retention_priority           VARCHAR(10),
+    recommended_action           TEXT,
+    estimated_revenue_at_risk    FLOAT,
+    days_since_last_score        INTEGER
 );
 
 -- 4. Model registry (version tracking)

@@ -191,6 +191,18 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Created mlflow/README.md documentation
 - All unit tests passing with pytest
 
+✅ **Day 9 — Batch Prediction Pipeline**
+- Updated batch_scorer.py with --mode, --threshold, --output flags
+- Batch scored all 7,043 customers successfully
+- Created prediction_monitor.py for prediction quality checks
+- Created incremental_scorer.py for efficient re-scoring
+- Created prediction_analysis.sql with drift detection
+- Created vw_prediction_summary.sql view
+- Created retention_targets.py with 3 priority tiers:
+  Tier 1 (high risk + high value), Tier 2, Tier 3
+- Updated churn_predictions table with new columns
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

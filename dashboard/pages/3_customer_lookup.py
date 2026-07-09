@@ -99,9 +99,16 @@ def main() -> None:
         st.warning("Enter a customer ID first.")
         return
 
-    matches = load_customer(customer_id.strip())
+    try:
+        matches = load_customer(customer_id.strip())
+    except Exception:
+        st.error(
+            "⚠️ Could not connect to the database. Please check your connection and try again."
+        )
+        return
+
     if matches.empty:
-        st.error(f"No customer found with ID '{customer_id}'.")
+        st.warning(f"No data available — no customer found with ID '{customer_id}'.")
         return
 
     customer = matches.iloc[0]
@@ -109,14 +116,18 @@ def main() -> None:
 
     st.divider()
 
-    with st.spinner("Running prediction..."):
-        predictor = ChurnPredictor()
-        predictor.load_best_model()
+    try:
+        with st.spinner("Running prediction..."):
+            predictor = ChurnPredictor()
+            predictor.load_best_model()
 
-        customer_dict = customer.to_dict()
-        result = predictor.predict_single(customer_dict)
-        factors = predictor.explain_prediction(customer_dict, top_n=5)
-        explanation = predictor.explain_with_gpt(customer_dict, result)
+            customer_dict = customer.to_dict()
+            result = predictor.predict_single(customer_dict)
+            factors = predictor.explain_prediction(customer_dict, top_n=5)
+            explanation = predictor.explain_with_gpt(customer_dict, result)
+    except Exception as e:
+        st.error(f"⚠️ Could not generate a prediction for this customer: {e}")
+        return
 
     color = get_risk_color(result["risk_segment"])
 

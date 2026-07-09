@@ -84,10 +84,20 @@ def main() -> None:
     st.title("Churn Overview")
 
     filters = render_sidebar_filters()
-    with st.spinner("Loading overview..."):
-        customers = load_filtered_customers(filters)
-        overview = load_churn_overview()
-        model_accuracy = load_model_accuracy()
+    try:
+        with st.spinner("Loading overview..."):
+            customers = load_filtered_customers(filters)
+            overview = load_churn_overview()
+            model_accuracy = load_model_accuracy()
+    except Exception:
+        st.error(
+            "⚠️ Could not connect to the database. Please check your connection and try again."
+        )
+        return
+
+    if customers.empty:
+        st.warning("No data available for the selected filters. Try widening your filter selection.")
+        return
 
     churn_rate = (customers["churn"] == "Yes").mean() if len(customers) else 0
     high_risk_count = int((customers["risk_segment"] == "High").sum())

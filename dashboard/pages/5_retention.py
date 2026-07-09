@@ -46,8 +46,20 @@ def main() -> None:
 
     st.title("Retention Targeting")
 
-    with st.spinner("Loading retention targets..."):
-        targets = load_retention_targets()
+    try:
+        with st.spinner("Loading retention targets..."):
+            targets = load_retention_targets()
+    except FileNotFoundError:
+        st.error(
+            "⚠️ No retention targeting list found. Run `python -m src.models.retention_targets` "
+            "first to generate it."
+        )
+        return
+
+    if targets.empty:
+        st.warning("No data available — the retention targeting list is empty.")
+        return
+
     tier_counts = targets["priority_tier"].value_counts()
     total_revenue_at_risk = targets["monthly_charges"].sum()
 

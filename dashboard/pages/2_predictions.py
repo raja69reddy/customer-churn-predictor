@@ -63,8 +63,18 @@ def main() -> None:
     st.title("Churn Predictions")
 
     filters = render_sidebar_filters()
-    with st.spinner("Loading predictions..."):
-        predictions = load_predictions(filters)
+    try:
+        with st.spinner("Loading predictions..."):
+            predictions = load_predictions(filters)
+    except Exception:
+        st.error(
+            "⚠️ Could not connect to the database. Please check your connection and try again."
+        )
+        return
+
+    if predictions.empty:
+        st.warning("No data available for the selected filters. Try widening your filter selection.")
+        return
 
     counts = predictions["risk_segment"].value_counts()
     avg_probability = predictions["churn_probability"].mean() if len(predictions) else 0

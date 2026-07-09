@@ -100,7 +100,14 @@ def main() -> None:
         "outreach lists. Use the page navigation in the sidebar to explore."
     )
 
-    stats = load_project_stats()
+    try:
+        stats = load_project_stats()
+    except Exception:
+        st.error(
+            "⚠️ Could not connect to the database. Please check your connection "
+            "(is PostgreSQL running and is .env configured?) and try again."
+        )
+        return
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Customers Scored", f"{stats['total_scored']:,}")

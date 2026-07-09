@@ -46,7 +46,8 @@ def main() -> None:
 
     st.title("Retention Targeting")
 
-    targets = load_retention_targets()
+    with st.spinner("Loading retention targets..."):
+        targets = load_retention_targets()
     tier_counts = targets["priority_tier"].value_counts()
     total_revenue_at_risk = targets["monthly_charges"].sum()
 

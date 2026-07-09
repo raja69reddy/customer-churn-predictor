@@ -50,7 +50,8 @@ def main() -> None:
 
     st.title("Model Performance")
 
-    performance = load_model_performance()
+    with st.spinner("Loading model performance..."):
+        performance = load_model_performance()
     best_row = performance.loc[performance["auc_score"].idxmax()]
 
     display_kpi_row([
@@ -72,19 +73,20 @@ def main() -> None:
     st.divider()
     st.subheader("ROC Curves — All Models")
 
-    trainer = ModelTrainer()
-    df = trainer.load_processed_data()
-    trainer.split_data(df)
+    with st.spinner("Loading model performance..."):
+        trainer = ModelTrainer()
+        df = trainer.load_processed_data()
+        trainer.split_data(df)
 
-    roc_fig = go.Figure()
-    for name in MODEL_NAMES:
-        model = trainer.load_model(name)
-        y_proba = model.predict_proba(trainer.X_test)[:, 1]
-        fpr, tpr, _ = roc_curve(trainer.y_test, y_proba)
-        auc = roc_auc_score(trainer.y_test, y_proba)
-        roc_fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name=f"{name} (AUC={auc:.3f})"))
-    roc_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="Random Guess", line=dict(dash="dash", color="gray")))
-    roc_fig.update_layout(xaxis_title="False Positive Rate", yaxis_title="True Positive Rate")
+        roc_fig = go.Figure()
+        for name in MODEL_NAMES:
+            model = trainer.load_model(name)
+            y_proba = model.predict_proba(trainer.X_test)[:, 1]
+            fpr, tpr, _ = roc_curve(trainer.y_test, y_proba)
+            auc = roc_auc_score(trainer.y_test, y_proba)
+            roc_fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name=f"{name} (AUC={auc:.3f})"))
+        roc_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="Random Guess", line=dict(dash="dash", color="gray")))
+        roc_fig.update_layout(xaxis_title="False Positive Rate", yaxis_title="True Positive Rate")
     st.plotly_chart(roc_fig, use_container_width=True)
 
     st.divider()
@@ -105,11 +107,12 @@ def main() -> None:
 
     st.divider()
     st.subheader(f"SHAP Summary — {best_row['model_name']}")
-    import shap
-    X_test_float = trainer.X_test.astype(float)
-    explainer = shap.TreeExplainer(best_model, feature_perturbation="tree_path_dependent")
-    shap_values = explainer(X_test_float)
-    shap_fig = shap_summary_plot(shap_values, X_test_float)
+    with st.spinner("Loading model performance..."):
+        import shap
+        X_test_float = trainer.X_test.astype(float)
+        explainer = shap.TreeExplainer(best_model, feature_perturbation="tree_path_dependent")
+        shap_values = explainer(X_test_float)
+        shap_fig = shap_summary_plot(shap_values, X_test_float)
     st.pyplot(shap_fig)
 
 

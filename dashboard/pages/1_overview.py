@@ -84,9 +84,10 @@ def main() -> None:
     st.title("Churn Overview")
 
     filters = render_sidebar_filters()
-    customers = load_filtered_customers(filters)
-    overview = load_churn_overview()
-    model_accuracy = load_model_accuracy()
+    with st.spinner("Loading overview..."):
+        customers = load_filtered_customers(filters)
+        overview = load_churn_overview()
+        model_accuracy = load_model_accuracy()
 
     churn_rate = (customers["churn"] == "Yes").mean() if len(customers) else 0
     high_risk_count = int((customers["risk_segment"] == "High").sum())

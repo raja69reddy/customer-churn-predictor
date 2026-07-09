@@ -63,7 +63,8 @@ def main() -> None:
     st.title("Churn Predictions")
 
     filters = render_sidebar_filters()
-    predictions = load_predictions(filters)
+    with st.spinner("Loading predictions..."):
+        predictions = load_predictions(filters)
 
     counts = predictions["risk_segment"].value_counts()
     avg_probability = predictions["churn_probability"].mean() if len(predictions) else 0

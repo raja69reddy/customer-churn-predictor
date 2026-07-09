@@ -109,11 +109,15 @@ def main() -> None:
 
     st.divider()
 
-    predictor = ChurnPredictor()
-    predictor.load_best_model()
+    with st.spinner("Running prediction..."):
+        predictor = ChurnPredictor()
+        predictor.load_best_model()
 
-    customer_dict = customer.to_dict()
-    result = predictor.predict_single(customer_dict)
+        customer_dict = customer.to_dict()
+        result = predictor.predict_single(customer_dict)
+        factors = predictor.explain_prediction(customer_dict, top_n=5)
+        explanation = predictor.explain_with_gpt(customer_dict, result)
+
     color = get_risk_color(result["risk_segment"])
 
     col1, col2 = st.columns([1, 1])
@@ -128,7 +132,6 @@ def main() -> None:
         st.markdown(f"**Churn Probability:** {result['churn_probability']:.1%}")
 
         st.markdown("#### Top 5 Risk Factors")
-        factors = predictor.explain_prediction(customer_dict, top_n=5)
         for i, factor in enumerate(factors, start=1):
             st.markdown(
                 f"{i}. **{factor['feature'].replace('_', ' ')}** — {factor['direction']} "
@@ -137,7 +140,6 @@ def main() -> None:
 
     st.divider()
     st.markdown("#### AI Explanation")
-    explanation = predictor.explain_with_gpt(customer_dict, result)
     st.info(explanation)
 
     st.markdown("#### Recommended Retention Actions")

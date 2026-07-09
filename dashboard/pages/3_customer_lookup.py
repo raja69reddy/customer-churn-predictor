@@ -1,6 +1,7 @@
 """Customer Lookup page — look up a single customer and run a live churn prediction."""
 import os
 import sys
+from datetime import datetime
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -14,7 +15,23 @@ from src.utils.db import get_engine
 
 st.set_page_config(page_title="Customer Lookup", page_icon="🔮", layout="wide")
 
+CACHE_TTL_SECONDS = 300
 
+
+def render_cache_controls() -> None:
+    if "last_updated" not in st.session_state:
+        st.session_state["last_updated"] = datetime.now()
+
+    st.sidebar.markdown("### Data")
+    if st.sidebar.button("Clear Cache", key="clear_cache_customer_lookup"):
+        st.cache_data.clear()
+        st.session_state["last_updated"] = datetime.now()
+        st.rerun()
+
+    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_customer(customer_id: str) -> pd.DataFrame:
     engine = get_engine()
     return pd.read_sql(
@@ -68,6 +85,8 @@ def render_profile_card(customer: pd.Series) -> None:
 
 
 def main() -> None:
+    render_cache_controls()
+
     st.title("Customer Lookup")
 
     customer_id = st.text_input("Customer ID", placeholder="e.g. CUST-00001")

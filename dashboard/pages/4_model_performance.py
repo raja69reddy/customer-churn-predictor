@@ -1,6 +1,7 @@
 """Model Performance page — leaderboard, ROC curves, feature importance, SHAP, confusion matrix."""
 import os
 import sys
+from datetime import datetime
 
 import matplotlib
 matplotlib.use("Agg")
@@ -22,14 +23,31 @@ from src.utils.db import get_engine
 st.set_page_config(page_title="Model Performance", page_icon="🔮", layout="wide")
 
 MODEL_NAMES = ["logistic_regression", "decision_tree", "random_forest_tuned", "xgboost_tuned", "lightgbm", "ensemble"]
+CACHE_TTL_SECONDS = 300
 
 
+def render_cache_controls() -> None:
+    if "last_updated" not in st.session_state:
+        st.session_state["last_updated"] = datetime.now()
+
+    st.sidebar.markdown("### Data")
+    if st.sidebar.button("Clear Cache", key="clear_cache_model_performance"):
+        st.cache_data.clear()
+        st.session_state["last_updated"] = datetime.now()
+        st.rerun()
+
+    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_model_performance() -> pd.DataFrame:
     engine = get_engine()
     return pd.read_sql("SELECT * FROM vw_model_performance", engine)
 
 
 def main() -> None:
+    render_cache_controls()
+
     st.title("Model Performance")
 
     performance = load_model_performance()

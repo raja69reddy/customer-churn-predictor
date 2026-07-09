@@ -1,6 +1,7 @@
 """Churn Predictions page — risk segment breakdown and searchable high-risk customer table."""
 import os
 import sys
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
@@ -13,6 +14,21 @@ from src.utils.db import get_engine
 
 st.set_page_config(page_title="Churn Predictions", page_icon="🔮", layout="wide")
 
+CACHE_TTL_SECONDS = 300
+
+
+def render_cache_controls() -> None:
+    if "last_updated" not in st.session_state:
+        st.session_state["last_updated"] = datetime.now()
+
+    st.sidebar.markdown("### Data")
+    if st.sidebar.button("Clear Cache", key="clear_cache_predictions"):
+        st.cache_data.clear()
+        st.session_state["last_updated"] = datetime.now()
+        st.rerun()
+
+    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+
 
 def render_sidebar_filters() -> dict:
     st.sidebar.title("Filters")
@@ -23,9 +39,11 @@ def render_sidebar_filters() -> dict:
         "Contract Type", ["All", "Month-to-month", "One year", "Two year"], key="contract"
     )
     tenure_range = st.sidebar.slider("Tenure Range (months)", 0, 72, (0, 72), key="tenure_range")
+    render_cache_controls()
     return {"risk_segment": risk_segment, "contract": contract, "tenure_range": tenure_range}
 
 
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_predictions(filters: dict) -> pd.DataFrame:
     engine = get_engine()
     query = "SELECT * FROM vw_churn_predictions WHERE tenure BETWEEN %(tenure_min)s AND %(tenure_max)s"

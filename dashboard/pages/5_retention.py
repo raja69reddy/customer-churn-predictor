@@ -1,6 +1,7 @@
 """Retention Targeting page — priority tiers and recommended outreach actions."""
 import os
 import sys
+from datetime import datetime
 
 import pandas as pd
 import plotly.express as px
@@ -13,6 +14,7 @@ from dashboard.components.metrics import display_kpi_row, format_number
 st.set_page_config(page_title="Retention Targeting", page_icon="🔮", layout="wide")
 
 RETENTION_TARGETS_PATH = "data/processed/retention_targets.csv"
+CACHE_TTL_SECONDS = 300
 
 TIER_ACTIONS = {
     "Tier 1": "Personal call + discount offer",
@@ -21,11 +23,27 @@ TIER_ACTIONS = {
 }
 
 
+def render_cache_controls() -> None:
+    if "last_updated" not in st.session_state:
+        st.session_state["last_updated"] = datetime.now()
+
+    st.sidebar.markdown("### Data")
+    if st.sidebar.button("Clear Cache", key="clear_cache_retention"):
+        st.cache_data.clear()
+        st.session_state["last_updated"] = datetime.now()
+        st.rerun()
+
+    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_retention_targets() -> pd.DataFrame:
     return pd.read_csv(RETENTION_TARGETS_PATH)
 
 
 def main() -> None:
+    render_cache_controls()
+
     st.title("Retention Targeting")
 
     targets = load_retention_targets()

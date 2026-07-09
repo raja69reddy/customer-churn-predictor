@@ -1,6 +1,7 @@
 """Streamlit dashboard — main entry point."""
 import os
 import sys
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
@@ -14,6 +15,8 @@ st.set_page_config(
     page_icon="🔮",
     layout="wide",
 )
+
+CACHE_TTL_SECONDS = 300
 
 
 def render_sidebar_filters() -> dict:
@@ -34,15 +37,33 @@ def render_sidebar_filters() -> dict:
     )
 
     st.sidebar.markdown("### Filters")
-    risk_segment = st.sidebar.selectbox("Risk Segment", ["All", "High", "Medium", "Low"])
-    contract = st.sidebar.selectbox(
-        "Contract Type", ["All", "Month-to-month", "One year", "Two year"]
+    risk_segment = st.sidebar.selectbox(
+        "Risk Segment", ["All", "High", "Medium", "Low"], key="risk_segment"
     )
-    tenure_range = st.sidebar.slider("Tenure Range (months)", 0, 72, (0, 72))
+    contract = st.sidebar.selectbox(
+        "Contract Type", ["All", "Month-to-month", "One year", "Two year"], key="contract"
+    )
+    tenure_range = st.sidebar.slider("Tenure Range (months)", 0, 72, (0, 72), key="tenure_range")
+
+    render_cache_controls()
 
     return {"risk_segment": risk_segment, "contract": contract, "tenure_range": tenure_range}
 
 
+def render_cache_controls() -> None:
+    if "last_updated" not in st.session_state:
+        st.session_state["last_updated"] = datetime.now()
+
+    st.sidebar.markdown("### Data")
+    if st.sidebar.button("Clear Cache", key="clear_cache_app"):
+        st.cache_data.clear()
+        st.session_state["last_updated"] = datetime.now()
+        st.rerun()
+
+    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_project_stats() -> dict:
     engine = get_engine()
 

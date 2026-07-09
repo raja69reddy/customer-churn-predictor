@@ -1,5 +1,15 @@
 # Changelog
 
+## Day 9 — Batch Prediction Pipeline
+- Updated batch_scorer.py with production flags
+- Created prediction_monitor.py for quality checks
+- Created incremental_scorer.py for stale predictions
+- Created prediction_analysis.sql queries
+- Created vw_prediction_summary.sql view
+- Created retention_targets.py with 3 priority tiers
+- Updated churn_predictions table schema
+- All tests passing
+
 ## Day 8 — MLflow Experiment Tracking
 - Set up MLflow experiment tracking
 - Logged all 6 model runs with params and metrics

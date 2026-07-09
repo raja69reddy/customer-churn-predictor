@@ -105,6 +105,16 @@ def save_to_db(engine, scored: pd.DataFrame, model_version: str, mode: str) -> i
 
     with engine.begin() as conn:
         if mode == "full":
+            # Archive the outgoing baseline before wiping it, so drift/segment-transition
+            # queries (sql/queries/prediction_analysis.sql) can compare against it.
+            conn.execute(
+                text(
+                    "INSERT INTO churn_predictions_history "
+                    "(customer_id, churn_probability, risk_segment, model_version, predicted_at) "
+                    "SELECT customer_id, churn_probability, risk_segment, model_version, predicted_at "
+                    "FROM churn_predictions"
+                )
+            )
             conn.execute(text("TRUNCATE TABLE churn_predictions"))
         else:
             customer_ids = list(to_save["customer_id"])

@@ -63,3 +63,17 @@ CREATE TABLE IF NOT EXISTS model_registry (
     trained_at    TIMESTAMP DEFAULT NOW(),
     is_active     BOOLEAN DEFAULT FALSE
 );
+
+-- 5. Prediction history — archived copy of a churn_predictions row taken right before it is
+--    overwritten by a new batch/incremental scoring run, so score drift and risk-segment
+--    transitions can be analyzed over time (churn_predictions itself only ever holds each
+--    customer's single latest prediction).
+CREATE TABLE IF NOT EXISTS churn_predictions_history (
+    id                SERIAL PRIMARY KEY,
+    customer_id       VARCHAR,
+    churn_probability FLOAT,
+    risk_segment      VARCHAR(20),
+    model_version     VARCHAR(20),
+    predicted_at      TIMESTAMP,
+    archived_at       TIMESTAMP DEFAULT NOW()
+);

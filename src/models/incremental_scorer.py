@@ -39,8 +39,21 @@ def run(stale_days: int = STALE_DAYS) -> pd.DataFrame:
         return stale_customers
 
     scored = predictor.predict_batch(stale_customers)
+    stale_ids = list(scored["customer_id"])
 
     with engine.begin() as conn:
+        # Archive the about-to-be-overwritten rows so score drift/segment-transition queries
+        # (sql/queries/prediction_analysis.sql) have a "previous" prediction to compare against.
+        conn.execute(
+            text(
+                "INSERT INTO churn_predictions_history "
+                "(customer_id, churn_probability, risk_segment, model_version, predicted_at) "
+                "SELECT customer_id, churn_probability, risk_segment, model_version, predicted_at "
+                "FROM churn_predictions WHERE customer_id = ANY(:ids)"
+            ),
+            {"ids": stale_ids},
+        )
+
         for _, row in scored.iterrows():
             conn.execute(
                 text(

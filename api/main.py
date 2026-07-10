@@ -99,16 +99,30 @@ def health():
 # Prediction endpoints
 # ---------------------------------------------------------------------------
 
+def _run_model(fn, *args, **kwargs):
+    """Runs a predictor call, converting unexpected model/runtime failures into a friendly 500."""
+    try:
+        return fn(*args, **kwargs)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.error("Model error: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="The prediction model failed to score this customer. Please verify the input and try again.",
+        ) from exc
+
+
 @app.post("/predict", response_model=PredictionOutput)
 def predict(customer: CustomerInput):
     """Scores a single customer for churn risk."""
-    return predictor.predict(customer)
+    return _run_model(predictor.predict, customer)
 
 
 @app.post("/predict/batch", response_model=BatchPredictionOutput)
 def predict_batch(payload: BatchPredictionInput):
     """Scores a batch of customers for churn risk."""
-    predictions = predictor.predict_batch(payload.customers)
+    predictions = _run_model(predictor.predict_batch, payload.customers)
     return BatchPredictionOutput(predictions=predictions)
 
 
@@ -152,7 +166,7 @@ def predict_customer(customer_id: str):
     """Scores an existing customer (by ID) for churn risk."""
     customer = _load_customer_row(customer_id)
     customer_input = CustomerInput(customer_id=customer_id, **{f: customer[f] for f in CUSTOMER_INPUT_FIELDS})
-    return predictor.predict(customer_input)
+    return _run_model(predictor.predict, customer_input)
 
 
 @app.get("/customer/{customer_id}/explanation")
@@ -161,7 +175,7 @@ def explain_customer(customer_id: str):
     customer = _load_customer_row(customer_id)
     customer_dict = {f: customer[f] for f in CUSTOMER_INPUT_FIELDS}
 
-    result = predictor.explain(customer_dict)
+    result = _run_model(predictor.explain, customer_dict)
     return {"customer_id": customer_id, **result}
 
 

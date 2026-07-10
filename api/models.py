@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CustomerInput(BaseModel):
@@ -28,6 +28,18 @@ class CustomerInput(BaseModel):
     payment_method: str = Field(..., examples=["Electronic check"])
     monthly_charges: float = Field(..., gt=0, examples=[85.5])
     total_charges: float = Field(..., ge=0, examples=[1026.0])
+
+    @model_validator(mode="after")
+    def check_total_charges_at_least_monthly_charges(self) -> "CustomerInput":
+        # A small tolerance (matches tests/test_eda.py) accounts for legitimate noise in
+        # tenure=1 customers, where total_charges can dip a few dollars below monthly_charges.
+        tolerance = 10.0
+        if self.total_charges < self.monthly_charges - tolerance:
+            raise ValueError(
+                f"total_charges ({self.total_charges}) cannot be less than monthly_charges "
+                f"({self.monthly_charges}) by more than ${tolerance}."
+            )
+        return self
 
     model_config = {
         "json_schema_extra": {

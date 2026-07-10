@@ -216,6 +216,17 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - All 5 pages verified working on localhost:8501
 - All unit tests passing with pytest
 
+✅ **Day 11 — FastAPI Prediction API**
+- Created api/main.py FastAPI app with CORS and middleware
+- Created api/models.py with Pydantic input/output models
+- Created api/predictor.py APIPredictor class
+- Added 12 endpoints: predict, batch predict, customer lookup, analytics, risk summary, retention targets
+- Added request validation and friendly error handling
+- Created api/database.py for DB operations
+- Tested all endpoints — all returning correct responses
+- Created api/README.md with curl examples
+- All unit tests passing with pytest
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

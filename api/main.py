@@ -183,3 +183,54 @@ def risk_summary():
     engine = get_engine()
     df = pd.read_sql("SELECT * FROM vw_risk_segments", engine)
     return _df_to_records(df)
+
+
+# ---------------------------------------------------------------------------
+# Analytics endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/analytics/churn-rate")
+def churn_rate():
+    """Returns the overall historical churn rate from raw_customers."""
+    engine = get_engine()
+    df = pd.read_sql("SELECT churn FROM raw_customers", engine)
+    rate = (df["churn"] == "Yes").mean()
+    return {"churn_rate": round(float(rate), 4), "churn_rate_pct": round(float(rate) * 100, 2), "total_customers": len(df)}
+
+
+@app.get("/analytics/risk-distribution")
+def risk_distribution():
+    """Returns customer counts per predicted risk segment."""
+    engine = get_engine()
+    df = pd.read_sql(
+        "SELECT risk_segment, COUNT(*) AS customer_count FROM churn_predictions GROUP BY risk_segment", engine
+    )
+    return _df_to_records(df)
+
+
+@app.get("/analytics/revenue-at-risk")
+def revenue_at_risk():
+    """Returns monthly revenue at risk, broken down by segment plus a combined High+Medium total."""
+    engine = get_engine()
+    df = pd.read_sql("SELECT * FROM vw_risk_segments", engine)
+    return _df_to_records(df)
+
+
+@app.get("/analytics/top-features")
+def top_features(limit: int = 15):
+    """Returns the top churn-driving features by model feature importance."""
+    df = pd.read_csv("data/processed/rf_feature_importance.csv")
+    df = df.sort_values("importance", ascending=False).head(limit)
+    return _df_to_records(df)
+
+
+@app.get("/analytics/retention-targets")
+def retention_targets():
+    """Returns retention priority tier counts and revenue exposure."""
+    df = pd.read_csv("data/processed/retention_targets.csv")
+    summary = df.groupby("priority_tier").agg(
+        customer_count=("customer_id", "count"),
+        avg_churn_probability=("churn_probability", "mean"),
+        total_monthly_revenue=("monthly_charges", "sum"),
+    ).reset_index()
+    return _df_to_records(summary)

@@ -9,6 +9,13 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from api.database import (
+    get_churn_rate as db_get_churn_rate,
+    get_customer_from_db,
+    get_high_risk_customers as db_get_high_risk_customers,
+    get_risk_summary as db_get_risk_summary,
+    save_prediction_to_db,
+)
 from api.models import BatchPredictionInput, BatchPredictionOutput, CustomerInput, PredictionOutput
 from api.predictor import APIPredictor
 from src.utils.db import get_engine
@@ -144,29 +151,27 @@ def model_performance():
 # Customer lookup endpoints
 # ---------------------------------------------------------------------------
 
-def _load_customer_row(customer_id: str) -> pd.Series:
-    engine = get_engine()
-    df = pd.read_sql(
-        "SELECT * FROM raw_customers WHERE customer_id = %(cid)s", engine, params={"cid": customer_id}
-    )
-    if df.empty:
+def _load_customer_row(customer_id: str) -> dict:
+    customer = get_customer_from_db(customer_id)
+    if customer is None:
         raise HTTPException(status_code=404, detail=f"Customer '{customer_id}' not found.")
-    return df.iloc[0]
+    return customer
 
 
 @app.get("/customer/{customer_id}")
 def get_customer(customer_id: str):
     """Returns raw profile details for a single customer."""
-    customer = _load_customer_row(customer_id)
-    return customer.to_dict()
+    return _load_customer_row(customer_id)
 
 
 @app.get("/customer/{customer_id}/predict", response_model=PredictionOutput)
 def predict_customer(customer_id: str):
-    """Scores an existing customer (by ID) for churn risk."""
+    """Scores an existing customer (by ID) for churn risk and persists the prediction."""
     customer = _load_customer_row(customer_id)
     customer_input = CustomerInput(customer_id=customer_id, **{f: customer[f] for f in CUSTOMER_INPUT_FIELDS})
-    return _run_model(predictor.predict, customer_input)
+    result = _run_model(predictor.predict, customer_input)
+    save_prediction_to_db(result.model_dump())
+    return result
 
 
 @app.get("/customer/{customer_id}/explanation")
@@ -182,21 +187,13 @@ def explain_customer(customer_id: str):
 @app.get("/customers/high-risk")
 def high_risk_customers(limit: int = 100):
     """Returns high-risk customers, sorted by churn probability descending."""
-    engine = get_engine()
-    df = pd.read_sql(
-        "SELECT * FROM vw_churn_predictions WHERE risk_segment = 'High' "
-        "ORDER BY churn_probability DESC LIMIT %(limit)s",
-        engine, params={"limit": limit},
-    )
-    return _df_to_records(df)
+    return db_get_high_risk_customers(limit=limit)
 
 
 @app.get("/customers/risk-summary")
 def risk_summary():
     """Returns per-segment counts, average churn probability, and revenue at risk."""
-    engine = get_engine()
-    df = pd.read_sql("SELECT * FROM vw_risk_segments", engine)
-    return _df_to_records(df)
+    return db_get_risk_summary()
 
 
 # ---------------------------------------------------------------------------
@@ -206,10 +203,7 @@ def risk_summary():
 @app.get("/analytics/churn-rate")
 def churn_rate():
     """Returns the overall historical churn rate from raw_customers."""
-    engine = get_engine()
-    df = pd.read_sql("SELECT churn FROM raw_customers", engine)
-    rate = (df["churn"] == "Yes").mean()
-    return {"churn_rate": round(float(rate), 4), "churn_rate_pct": round(float(rate) * 100, 2), "total_customers": len(df)}
+    return db_get_churn_rate()
 
 
 @app.get("/analytics/risk-distribution")
@@ -225,9 +219,7 @@ def risk_distribution():
 @app.get("/analytics/revenue-at-risk")
 def revenue_at_risk():
     """Returns monthly revenue at risk, broken down by segment plus a combined High+Medium total."""
-    engine = get_engine()
-    df = pd.read_sql("SELECT * FROM vw_risk_segments", engine)
-    return _df_to_records(df)
+    return db_get_risk_summary()
 
 
 @app.get("/analytics/top-features")

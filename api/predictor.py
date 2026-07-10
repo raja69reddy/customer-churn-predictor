@@ -65,6 +65,17 @@ class APIPredictor:
         self._ensure_loaded()
         return [self.predict(customer) for customer in customers]
 
+    def explain(self, customer_dict: dict) -> dict:
+        """Returns churn probability, risk segment, and an AI (or template-fallback) explanation."""
+        self._ensure_loaded()
+        result = self._churn_predictor.predict_single(customer_dict)
+        explanation = self._churn_predictor.explain_with_gpt(customer_dict, result)
+        return {
+            "churn_probability": result["churn_probability"],
+            "risk_segment": result["risk_segment"],
+            "explanation": explanation,
+        }
+
     def get_model_info(self) -> dict:
         self._ensure_loaded()
         engine = get_engine()

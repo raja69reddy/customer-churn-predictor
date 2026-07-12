@@ -324,6 +324,14 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Set up GitHub Actions CI — runs pytest on every push
 - All deployment configs verified
 
+✅ **Day 13 — Code Quality + Documentation**
+- Ran black formatter on entire codebase
+- Fixed all flake8 warnings — clean codebase
+- Added type hints to all key functions
+- Updated README with model performance table and key findings
+- Created CONTRIBUTING.md with full development guide
+- Project is clean and well documented
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

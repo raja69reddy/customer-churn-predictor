@@ -37,14 +37,22 @@ customer-churn-predictor/
 ```
 
 ## Model Performance
-_To be updated after training (Day 3)._
+Baseline model comparison (`data/processed/model_comparison.csv`), evaluated on the held-out test split:
 
-| Model | Accuracy | AUC | F1 |
-|---|---|---|---|
-| Logistic Regression | — | — | — |
-| Random Forest | — | — | — |
-| XGBoost | — | — | — |
-| LightGBM | — | — | — |
+| Model | Accuracy | AUC | F1 | Precision | Recall |
+|---|---|---|---|---|---|
+| XGBoost | 0.9028 | 0.9604 | 0.8161 | 0.8021 | 0.8306 |
+| Logistic Regression | 0.8950 | 0.9603 | 0.7995 | 0.7930 | 0.8060 |
+| Decision Tree | 0.9013 | 0.9577 | 0.8154 | 0.7933 | 0.8388 |
+| Random Forest | 0.8744 | 0.9338 | 0.7611 | 0.7520 | 0.7705 |
+
+After Day 6-7 tuning and ensembling, **XGBoost (tuned)** is the current active/Production model (AUC 0.9624) — see `data/processed/final_model_leaderboard.csv` for the full 6-model comparison (including LightGBM and the soft-voting ensemble) and `sql/vw_model_performance.sql` / `GET /model/performance` for live metrics.
+
+## Key Findings
+- **Month-to-month contracts churn at 43%** — by far the highest-risk contract type, vs. much lower churn for one- and two-year contracts.
+- **Tenure under 12 months is the highest-risk group** — new customers are far more likely to churn than established ones, independent of other factors.
+- **Electronic check payment method has the highest churn rate** of all payment methods — customers on autopay (bank transfer / credit card) churn noticeably less.
+- **Top 3 SHAP-driven churn features**: `charge_per_month`, `tenure_group_New Customer`, and `contract_risk_score` — together these dominate the model's feature importance (see `data/processed/rf_feature_importance.csv`) and consistently appear as the top risk factors returned by `/predict` and the dashboard's Customer Lookup page.
 
 ## Setup Instructions
 ```bash
@@ -90,13 +98,71 @@ The Streamlit dashboard (dashboard/app.py) provides:
 - Feature importance charts (SHAP)
 - Per-customer churn probability and GPT explanation
 
+### Dashboard Screenshots
+_Screenshots to be added — run `streamlit run dashboard/app.py` locally and navigate to each of the
+5 pages (Overview, Predictions, Customer Lookup, Model Performance, Retention Targeting) to preview._
+
+| Page | Screenshot |
+|---|---|
+| Overview | _placeholder_ |
+| Predictions | _placeholder_ |
+| Customer Lookup | _placeholder_ |
+| Model Performance | _placeholder_ |
+| Retention Targeting | _placeholder_ |
+
 ## API Endpoints
+Full endpoint reference and curl examples: [api/README.md](api/README.md). Summary:
+
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/health` | Health check |
 | POST | `/predict` | Predict churn for a single customer |
 | POST | `/predict/batch` | Batch predictions |
 | GET | `/model/info` | Active model metadata |
+| GET | `/model/performance` | Performance metrics for all trained models |
+| GET | `/customer/{customer_id}` | Raw profile details for a customer |
+| GET | `/customer/{customer_id}/predict` | Score an existing customer by ID |
+| GET | `/customer/{customer_id}/explanation` | AI-generated churn risk explanation |
+| GET | `/customers/high-risk` | High-risk customers sorted by probability |
+| GET | `/customers/risk-summary` | Per-segment counts, averages, revenue at risk |
+| GET | `/analytics/churn-rate` | Overall historical churn rate |
+| GET | `/analytics/risk-distribution` | Customer counts per risk segment |
+| GET | `/analytics/revenue-at-risk` | Monthly revenue at risk by segment |
+| GET | `/analytics/top-features` | Top churn-driving features by importance |
+| GET | `/analytics/retention-targets` | Retention priority tier counts and revenue exposure |
+
+**Example — score a single customer:**
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_id": "CUST-DEMO-001",
+    "gender": "Female", "senior_citizen": 0, "partner": "Yes", "dependents": "No",
+    "tenure": 12, "phone_service": "Yes", "multiple_lines": "No",
+    "internet_service": "Fiber optic", "online_security": "No", "online_backup": "No",
+    "device_protection": "No", "tech_support": "No", "streaming_tv": "Yes",
+    "streaming_movies": "Yes", "contract": "Month-to-month", "paperless_billing": "Yes",
+    "payment_method": "Electronic check", "monthly_charges": 85.5, "total_charges": 1026.0
+  }'
+```
+```json
+{
+  "customer_id": "CUST-DEMO-001",
+  "churn_probability": 0.9594,
+  "risk_segment": "High",
+  "top_risk_factors": [
+    {"feature": "tenure_group_New Customer", "shap_value": 1.78, "direction": "increases risk"}
+  ],
+  "recommended_actions": ["Offer a loyalty discount or incentive to switch to a longer-term contract"],
+  "model_version": "churn-predictor_v1",
+  "predicted_at": "2026-07-10T15:39:12.092137"
+}
+```
+
+**Example — look up an existing customer:**
+```bash
+curl http://localhost:8000/customer/CUST-05036/predict
+```
 
 ## Deployment
 

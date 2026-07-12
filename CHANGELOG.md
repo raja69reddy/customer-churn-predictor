@@ -1,5 +1,12 @@
 # Changelog
 
+## Day 13 - Code Quality + Documentation
+- Ran black formatter on entire codebase
+- Fixed all flake8 warnings
+- Added type hints to all key functions
+- Updated README with model performance table
+- Created CONTRIBUTING.md
+
 ## Day 12 - Docker + Deployment
 - Updated Dockerfile for production
 - Updated docker-compose.yml with 3 services

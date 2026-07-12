@@ -54,19 +54,13 @@ jobs:
       - name: Create empty MLflow experiment
         run: python -c "import mlflow; mlflow.create_experiment('customer-churn-predictor')"
 
-      # Model-dependent tests are run locally only
-      # CI only runs data and dashboard tests
+      # Only test_ingestion.py runs in CI
+      # All other tests require trained models,
+      # MLflow registry, and processed data files
+      # Run full test suite locally: pytest tests/ -v
       - name: Run tests
         id: pytest
-        run: >
-          pytest tests/ -v
-          --ignore=tests/test_mlflow.py
-          --ignore=tests/test_models.py
-          --ignore=tests/test_ensemble.py
-          --ignore=tests/test_api.py
-          --ignore=tests/test_evaluation.py
-          --ignore=tests/test_engineering.py
-          --ignore=tests/test_batch_pipeline.py
+        run: pytest tests/test_ingestion.py -v
 
       - name: Print test results
         if: always()

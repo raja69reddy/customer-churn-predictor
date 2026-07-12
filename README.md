@@ -98,6 +98,29 @@ The Streamlit dashboard (dashboard/app.py) provides:
 | POST | `/predict/batch` | Batch predictions |
 | GET | `/model/info` | Active model metadata |
 
+## Deployment
+
+### Docker
+```bash
+# Build and run all 3 services (postgres, fastapi, streamlit)
+docker-compose up --build
+
+# FastAPI:   http://localhost:8000
+# Streamlit: http://localhost:8501
+```
+
+### Streamlit Community Cloud
+1. Push this repo to GitHub (already done).
+2. Go to [share.streamlit.io](https://share.streamlit.io) and create a new app.
+3. Set **Repository**: `raja69reddy/customer-churn-predictor`, **Branch**: `main`, **Main file path**: `dashboard/app.py`.
+4. Set **Requirements file** to `requirements_streamlit.txt` (a trimmed dependency set — excludes FastAPI/testing-only packages).
+5. Add the same variables from `.env.example` under **Advanced settings → Secrets** (Postgres connection details, `OPENAI_API_KEY`).
+6. Theme settings are picked up automatically from `.streamlit/config.toml`.
+7. Deploy — the app will be available at `https://<app-name>.streamlit.app`.
+
+### CI
+Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/ci.yml`).
+
 ## 📋 Progress Log
 
 ✅ **Day 1 — Project Scaffold**

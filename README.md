@@ -250,6 +250,14 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Created api/README.md with curl examples
 - All unit tests passing with pytest
 
+✅ **Day 12 — Docker + Deployment**
+- Updated Dockerfile with healthcheck and multi-service support
+- Updated docker-compose.yml: Streamlit + FastAPI + PostgreSQL
+- Created .dockerignore file
+- Added Streamlit Community Cloud deployment config
+- Set up GitHub Actions CI — runs pytest on every push
+- All deployment configs verified
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

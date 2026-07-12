@@ -1,4 +1,5 @@
 """Registers the current best MLflow run as a Production model version."""
+
 from mlflow.tracking import MlflowClient
 
 from src.models import mlflow_registry, mlflow_setup
@@ -16,15 +17,19 @@ def run() -> None:
     client.update_registered_model(
         name=model_name,
         description="Customer churn classifier for customer-churn-predictor. "
-                     "Predicts churn probability from engineered customer features.",
+        "Predicts churn probability from engineered customer features.",
     )
     client.update_model_version(
         name=model_name,
         version=version,
         description="Best-by-AUC run from the customer-churn-predictor MLflow experiment.",
     )
-    client.set_model_version_tag(model_name, version, "project", "customer-churn-predictor")
-    client.set_model_version_tag(model_name, version, "stage_reason", "highest AUC across all tracked runs")
+    client.set_model_version_tag(
+        model_name, version, "project", "customer-churn-predictor"
+    )
+    client.set_model_version_tag(
+        model_name, version, "stage_reason", "highest AUC across all tracked runs"
+    )
 
     mlflow_registry.promote_to_production(model_name, version)
 
@@ -43,7 +48,9 @@ def run() -> None:
     df = trainer.load_processed_data()
     trainer.split_data(df)
     predictions = production_model.predict(trainer.X_test.head(5))
-    print(f"Production model loaded successfully — sample predictions: {list(predictions)}")
+    print(
+        f"Production model loaded successfully — sample predictions: {list(predictions)}"
+    )
 
 
 if __name__ == "__main__":

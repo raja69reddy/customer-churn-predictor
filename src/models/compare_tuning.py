@@ -1,7 +1,9 @@
 """Compares tuned models against their baselines and updates model_registry."""
+
 from datetime import datetime
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,21 +33,27 @@ def run() -> None:
         baseline_model = trainer.load_model(baseline_name)
         tuned_model = trainer.load_model(tuned_name)
 
-        baseline_metrics = evaluator.evaluate_model(baseline_model, trainer.X_test, trainer.y_test)
+        baseline_metrics = evaluator.evaluate_model(
+            baseline_model, trainer.X_test, trainer.y_test
+        )
         tuned = evaluator.evaluate_model(tuned_model, trainer.X_test, trainer.y_test)
         tuned_metrics[tuned_name] = tuned
 
-        rows.append({
-            "model": baseline_name,
-            "baseline_auc": baseline_metrics["auc"],
-            "tuned_auc": tuned["auc"],
-            "improvement": tuned["auc"] - baseline_metrics["auc"],
-        })
+        rows.append(
+            {
+                "model": baseline_name,
+                "baseline_auc": baseline_metrics["auc"],
+                "tuned_auc": tuned["auc"],
+                "improvement": tuned["auc"] - baseline_metrics["auc"],
+            }
+        )
 
     comparison = pd.DataFrame(rows)
     print("Model | Baseline AUC | Tuned AUC | Improvement")
     for _, row in comparison.iterrows():
-        print(f"{row['model']:<15} {row['baseline_auc']:.4f}        {row['tuned_auc']:.4f}      {row['improvement']:+.4f}")
+        print(
+            f"{row['model']:<15} {row['baseline_auc']:.4f}        {row['tuned_auc']:.4f}      {row['improvement']:+.4f}"
+        )
 
     comparison.to_csv("data/processed/tuning_comparison.csv", index=False)
     print("\nSaved comparison to data/processed/tuning_comparison.csv")
@@ -90,7 +98,10 @@ def run() -> None:
         full_registry = pd.read_sql("SELECT * FROM model_registry", conn)
         best_id = int(full_registry.loc[full_registry["auc_score"].idxmax(), "id"])
         conn.execute(text("UPDATE model_registry SET is_active = FALSE"))
-        conn.execute(text("UPDATE model_registry SET is_active = TRUE WHERE id = :best_id"), {"best_id": best_id})
+        conn.execute(
+            text("UPDATE model_registry SET is_active = TRUE WHERE id = :best_id"),
+            {"best_id": best_id},
+        )
 
     final = pd.read_sql(
         "SELECT model_name, model_version, accuracy, auc_score, f1_score, is_active "

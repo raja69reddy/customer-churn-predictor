@@ -1,4 +1,5 @@
 """Unit tests for the Streamlit dashboard's data sources and importable components."""
+
 import os
 
 import pytest

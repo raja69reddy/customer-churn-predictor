@@ -1,4 +1,5 @@
 """Re-scores only customers whose churn_predictions are more than N days stale."""
+
 import argparse
 import os
 from datetime import datetime
@@ -15,14 +16,12 @@ STALE_DAYS = 7
 
 
 def load_stale_customers(engine, stale_days: int = STALE_DAYS) -> pd.DataFrame:
-    query = text(
-        """
+    query = text("""
         SELECT rc.*
         FROM raw_customers rc
         JOIN churn_predictions cp ON cp.customer_id = rc.customer_id
         WHERE cp.predicted_at < NOW() - (:stale_days || ' days')::INTERVAL
-        """
-    )
+        """)
     return pd.read_sql(query, engine, params={"stale_days": stale_days})
 
 
@@ -32,7 +31,9 @@ def run(stale_days: int = STALE_DAYS) -> pd.DataFrame:
 
     engine = get_engine()
     stale_customers = load_stale_customers(engine, stale_days)
-    print(f"Found {len(stale_customers)} customers scored more than {stale_days} days ago")
+    print(
+        f"Found {len(stale_customers)} customers scored more than {stale_days} days ago"
+    )
 
     if stale_customers.empty:
         print("Re-scored 0 customers")
@@ -74,7 +75,9 @@ def run(stale_days: int = STALE_DAYS) -> pd.DataFrame:
 
     os.makedirs("data/processed", exist_ok=True)
     out_path = f"data/processed/incremental_scores_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.csv"
-    scored[["customer_id", "churn_probability", "risk_segment"]].to_csv(out_path, index=False)
+    scored[["customer_id", "churn_probability", "risk_segment"]].to_csv(
+        out_path, index=False
+    )
     print(f"Saved incremental results to {out_path}")
 
     mlflow_setup.setup_experiment()

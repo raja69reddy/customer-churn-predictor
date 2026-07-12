@@ -1,4 +1,5 @@
 """Builds a prioritized retention outreach list from high-risk customers."""
+
 import os
 
 import pandas as pd
@@ -57,12 +58,16 @@ def run() -> pd.DataFrame:
 
     print("\nTargeting Summary")
     print("=" * 40)
-    tier_summary = targets.groupby("priority_tier").agg(
-        customer_count=("customer_id", "count"),
-        avg_churn_probability=("churn_probability", "mean"),
-        avg_monthly_charges=("monthly_charges", "mean"),
-        total_monthly_revenue=("monthly_charges", "sum"),
-    ).round(2)
+    tier_summary = (
+        targets.groupby("priority_tier")
+        .agg(
+            customer_count=("customer_id", "count"),
+            avg_churn_probability=("churn_probability", "mean"),
+            avg_monthly_charges=("monthly_charges", "mean"),
+            total_monthly_revenue=("monthly_charges", "sum"),
+        )
+        .round(2)
+    )
     print(tier_summary.to_string())
 
     return targets

@@ -1,12 +1,18 @@
 """Runs the full feature engineering pipeline against PostgreSQL raw_customers."""
+
 from sqlalchemy import text
 
 from src.features.engineering import FeatureEngineer
 from src.utils.db import get_engine
 
 PROCESSED_COLUMNS = [
-    "customer_id", "tenure_group", "charge_per_month", "services_count",
-    "contract_risk_score", "payment_risk_score", "churn_label",
+    "customer_id",
+    "tenure_group",
+    "charge_per_month",
+    "services_count",
+    "contract_risk_score",
+    "payment_risk_score",
+    "churn_label",
 ]
 
 

@@ -1,4 +1,5 @@
 """Pydantic request/response models for the churn prediction API."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -8,7 +9,9 @@ from pydantic import BaseModel, Field, model_validator
 class CustomerInput(BaseModel):
     """Raw customer attributes needed to score churn risk."""
 
-    customer_id: Optional[str] = Field(default=None, description="Known customer ID, if any.")
+    customer_id: Optional[str] = Field(
+        default=None, description="Known customer ID, if any."
+    )
     gender: str = Field(..., examples=["Female"])
     senior_citizen: int = Field(..., ge=0, le=1, examples=[0])
     partner: str = Field(..., examples=["Yes"])

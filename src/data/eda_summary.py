@@ -1,4 +1,5 @@
 """EDA summary — prints and saves headline churn statistics from raw_customers."""
+
 import os
 
 import pandas as pd
@@ -27,10 +28,21 @@ def _top_correlated_features(df: pd.DataFrame, n: int = 5) -> pd.Series:
 
     numeric_cols = ["tenure", "monthly_charges", "total_charges", "senior_citizen"]
     categorical_cols = [
-        "gender", "partner", "dependents", "phone_service", "multiple_lines",
-        "internet_service", "online_security", "online_backup", "device_protection",
-        "tech_support", "streaming_tv", "streaming_movies", "contract",
-        "paperless_billing", "payment_method",
+        "gender",
+        "partner",
+        "dependents",
+        "phone_service",
+        "multiple_lines",
+        "internet_service",
+        "online_security",
+        "online_backup",
+        "device_protection",
+        "tech_support",
+        "streaming_tv",
+        "streaming_movies",
+        "contract",
+        "paperless_billing",
+        "payment_method",
     ]
 
     numeric_df = df[numeric_cols].copy()
@@ -42,16 +54,28 @@ def _top_correlated_features(df: pd.DataFrame, n: int = 5) -> pd.Series:
 
 
 def _contract_breakdown(df: pd.DataFrame) -> pd.Series:
-    return df.groupby("contract")["churn"].apply(lambda s: (s == "Yes").mean() * 100).sort_values(ascending=False)
+    return (
+        df.groupby("contract")["churn"]
+        .apply(lambda s: (s == "Yes").mean() * 100)
+        .sort_values(ascending=False)
+    )
 
 
 def _tenure_group_breakdown(df: pd.DataFrame) -> pd.Series:
-    tenure_group = pd.cut(df["tenure"], bins=TENURE_BINS, labels=TENURE_LABELS, include_lowest=True)
-    return df.groupby(tenure_group, observed=True)["churn"].apply(lambda s: (s == "Yes").mean() * 100)
+    tenure_group = pd.cut(
+        df["tenure"], bins=TENURE_BINS, labels=TENURE_LABELS, include_lowest=True
+    )
+    return df.groupby(tenure_group, observed=True)["churn"].apply(
+        lambda s: (s == "Yes").mean() * 100
+    )
 
 
 def _monthly_charges_stats(df: pd.DataFrame) -> pd.DataFrame:
-    return df.groupby("churn")["monthly_charges"].describe()[["mean", "std", "min", "max"]].round(2)
+    return (
+        df.groupby("churn")["monthly_charges"]
+        .describe()[["mean", "std", "min", "max"]]
+        .round(2)
+    )
 
 
 def generate_summary() -> str:

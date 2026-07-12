@@ -1,4 +1,5 @@
 """Monitors churn_predictions quality — score ranges, segment sanity, and score drift over time."""
+
 import json
 import os
 from datetime import datetime
@@ -24,7 +25,9 @@ def check_score_distribution(df: pd.DataFrame = None) -> dict:
     df = df if df is not None else _load_predictions()
     scores = df["churn_probability"]
 
-    passed = bool((scores >= 0).all() and (scores <= 1).all() and not scores.isnull().any())
+    passed = bool(
+        (scores >= 0).all() and (scores <= 1).all() and not scores.isnull().any()
+    )
     return {
         "passed": passed,
         "min": float(scores.min()),
@@ -70,7 +73,9 @@ def detect_score_drift(df: pd.DataFrame = None) -> dict:
 
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
     with open(SNAPSHOT_PATH, "w") as f:
-        json.dump({"mean_score": current_mean, "snapshot_at": datetime.now().isoformat()}, f)
+        json.dump(
+            {"mean_score": current_mean, "snapshot_at": datetime.now().isoformat()}, f
+        )
 
     return {
         "has_previous_snapshot": has_previous,
@@ -119,7 +124,9 @@ def generate_monitoring_report(results: dict = None) -> str:
 
     sd = results["score_distribution"]
     lines.append(f"\n[1] Score Distribution - {'PASS' if sd['passed'] else 'FAIL'}")
-    lines.append(f"    n={sd['n']}  min={sd['min']:.4f}  max={sd['max']:.4f}  mean={sd['mean']:.4f}  std={sd['std']:.4f}")
+    lines.append(
+        f"    n={sd['n']}  min={sd['min']:.4f}  max={sd['max']:.4f}  mean={sd['mean']:.4f}  std={sd['std']:.4f}"
+    )
 
     sg = results["segment_distribution"]
     lines.append(f"\n[2] Segment Distribution - {'PASS' if sg['passed'] else 'FAIL'}")
@@ -136,7 +143,9 @@ def generate_monitoring_report(results: dict = None) -> str:
     else:
         lines.append("    No previous snapshot - this run establishes the baseline.")
 
-    lines.append(f"\nOverall: {'ALL CHECKS PASSED' if results['all_checks_passed'] else 'SOME CHECKS FAILED'}")
+    lines.append(
+        f"\nOverall: {'ALL CHECKS PASSED' if results['all_checks_passed'] else 'SOME CHECKS FAILED'}"
+    )
     lines.append("=" * 55)
 
     report = "\n".join(lines)

@@ -1,4 +1,5 @@
 """Retention Targeting page — priority tiers and recommended outreach actions."""
+
 import os
 import sys
 from datetime import datetime
@@ -7,7 +8,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from dashboard.components.metrics import display_kpi_row, format_number
 
@@ -33,7 +36,9 @@ def render_cache_controls() -> None:
         st.session_state["last_updated"] = datetime.now()
         st.rerun()
 
-    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+    st.sidebar.caption(
+        f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}"
+    )
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
@@ -63,12 +68,30 @@ def main() -> None:
     tier_counts = targets["priority_tier"].value_counts()
     total_revenue_at_risk = targets["monthly_charges"].sum()
 
-    display_kpi_row([
-        {"title": "Tier 1 Customers", "value": format_number(int(tier_counts.get("Tier 1", 0))), "color": "#d62728"},
-        {"title": "Tier 2 Customers", "value": format_number(int(tier_counts.get("Tier 2", 0))), "color": "#ff7f0e"},
-        {"title": "Tier 3 Customers", "value": format_number(int(tier_counts.get("Tier 3", 0))), "color": "#7f7f7f"},
-        {"title": "Total Revenue at Risk", "value": f"${total_revenue_at_risk:,.2f}", "color": "#9467bd"},
-    ])
+    display_kpi_row(
+        [
+            {
+                "title": "Tier 1 Customers",
+                "value": format_number(int(tier_counts.get("Tier 1", 0))),
+                "color": "#d62728",
+            },
+            {
+                "title": "Tier 2 Customers",
+                "value": format_number(int(tier_counts.get("Tier 2", 0))),
+                "color": "#ff7f0e",
+            },
+            {
+                "title": "Tier 3 Customers",
+                "value": format_number(int(tier_counts.get("Tier 3", 0))),
+                "color": "#7f7f7f",
+            },
+            {
+                "title": "Total Revenue at Risk",
+                "value": f"${total_revenue_at_risk:,.2f}",
+                "color": "#9467bd",
+            },
+        ]
+    )
 
     st.divider()
 
@@ -77,10 +100,17 @@ def main() -> None:
         pie_data = tier_counts.reset_index()
         pie_data.columns = ["priority_tier", "count"]
         fig = px.pie(
-            pie_data, names="priority_tier", values="count",
-            title="Tier Distribution", hole=0.35,
+            pie_data,
+            names="priority_tier",
+            values="count",
+            title="Tier Distribution",
+            hole=0.35,
             color="priority_tier",
-            color_discrete_map={"Tier 1": "#d62728", "Tier 2": "#ff7f0e", "Tier 3": "#7f7f7f"},
+            color_discrete_map={
+                "Tier 1": "#d62728",
+                "Tier 2": "#ff7f0e",
+                "Tier 3": "#7f7f7f",
+            },
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -92,7 +122,9 @@ def main() -> None:
 
     st.divider()
     st.subheader("Tier 1 Priority Customers")
-    tier1 = targets[targets["priority_tier"] == "Tier 1"].sort_values("churn_probability", ascending=False)
+    tier1 = targets[targets["priority_tier"] == "Tier 1"].sort_values(
+        "churn_probability", ascending=False
+    )
     st.dataframe(tier1, use_container_width=True, hide_index=True)
 
     csv_bytes = targets.to_csv(index=False).encode("utf-8")

@@ -1,7 +1,9 @@
 """Analyzes MLflow experiment runs — best run lookup, history, comparison plots, and feature drift."""
+
 import os
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import mlflow
@@ -16,7 +18,9 @@ def _all_runs() -> pd.DataFrame:
     mlflow_setup.configure_tracking()
     experiment = mlflow.get_experiment_by_name(mlflow_setup.EXPERIMENT_NAME)
     if experiment is None:
-        raise RuntimeError(f"MLflow experiment '{mlflow_setup.EXPERIMENT_NAME}' not found.")
+        raise RuntimeError(
+            f"MLflow experiment '{mlflow_setup.EXPERIMENT_NAME}' not found."
+        )
     return mlflow.search_runs(experiment_ids=[experiment.experiment_id])
 
 
@@ -32,7 +36,9 @@ def get_run_history() -> pd.DataFrame:
     return runs.sort_values("metrics.auc", ascending=False).reset_index(drop=True)
 
 
-def plot_metric_comparison(metric: str = "auc", save_path: str = "data/processed/mlflow_metric_comparison.png") -> str:
+def plot_metric_comparison(
+    metric: str = "auc", save_path: str = "data/processed/mlflow_metric_comparison.png"
+) -> str:
     history = get_run_history()
     metric_col = f"metrics.{metric}"
     if metric_col not in history.columns:
@@ -57,8 +63,11 @@ def plot_metric_comparison(metric: str = "auc", save_path: str = "data/processed
 def export_run_summary(path: str = "data/processed/mlflow_summary.csv") -> str:
     history = get_run_history()
     keep_cols = ["run_id"] + [
-        c for c in history.columns
-        if c.startswith("tags.mlflow.runName") or c.startswith("metrics.") or c.startswith("params.")
+        c
+        for c in history.columns
+        if c.startswith("tags.mlflow.runName")
+        or c.startswith("metrics.")
+        or c.startswith("params.")
     ]
     summary = history[keep_cols]
 
@@ -71,6 +80,7 @@ def get_feature_drift(run_ids: list) -> pd.DataFrame:
     mlflow_setup.configure_tracking()
 
     from src.models.train import ModelTrainer
+
     trainer = ModelTrainer()
     trainer.load_processed_data()
     feature_names = trainer.get_feature_columns()
@@ -84,7 +94,9 @@ def get_feature_drift(run_ids: list) -> pd.DataFrame:
         # fails on this local file store (empty artifact_path bug), so download the artifacts
         # to a local path first and load from there instead.
         model_id = run.outputs.model_outputs[0].model_id
-        local_path = mlflow.artifacts.download_artifacts(artifact_uri=f"models:/{model_id}")
+        local_path = mlflow.artifacts.download_artifacts(
+            artifact_uri=f"models:/{model_id}"
+        )
         model = mlflow.sklearn.load_model(local_path)
         name = run.data.tags.get("mlflow.runName", run_id)
 
@@ -94,14 +106,17 @@ def get_feature_drift(run_ids: list) -> pd.DataFrame:
             importances[name] = np.abs(model.coef_[0])
         elif hasattr(model, "estimators_"):
             sub_importances = [
-                est.feature_importances_ for est in model.estimators_
+                est.feature_importances_
+                for est in model.estimators_
                 if hasattr(est, "feature_importances_")
             ]
             if sub_importances:
                 importances[name] = np.mean(sub_importances, axis=0)
 
     if not importances:
-        raise RuntimeError("None of the given runs have inspectable feature importances.")
+        raise RuntimeError(
+            "None of the given runs have inspectable feature importances."
+        )
 
     drift_df = pd.DataFrame(importances, index=feature_names)
     print("Feature importance across runs/versions:")
@@ -111,4 +126,6 @@ def get_feature_drift(run_ids: list) -> pd.DataFrame:
 
 if __name__ == "__main__":
     best = get_best_run()
-    print(f"Best run: {best.get('tags.mlflow.runName')} (AUC={best.get('metrics.auc'):.4f})")
+    print(
+        f"Best run: {best.get('tags.mlflow.runName')} (AUC={best.get('metrics.auc'):.4f})"
+    )

@@ -1,4 +1,5 @@
 """Unit tests for cross validation, SHAP explanations, tuning, and ChurnPredictor."""
+
 import os
 
 import pytest
@@ -13,11 +14,19 @@ from src.models.predict import ChurnPredictor
 from src.models.train import ModelTrainer
 
 SAMPLE_CUSTOMER = {
-    "tenure": 3, "monthly_charges": 95.0, "total_charges": 285.0,
-    "contract": "Month-to-month", "payment_method": "Electronic check",
-    "phone_service": "Yes", "internet_service": "Fiber optic",
-    "online_security": "No", "online_backup": "No", "device_protection": "No",
-    "tech_support": "No", "streaming_tv": "Yes", "streaming_movies": "Yes",
+    "tenure": 3,
+    "monthly_charges": 95.0,
+    "total_charges": 285.0,
+    "contract": "Month-to-month",
+    "payment_method": "Electronic check",
+    "phone_service": "Yes",
+    "internet_service": "Fiber optic",
+    "online_security": "No",
+    "online_backup": "No",
+    "device_protection": "No",
+    "tech_support": "No",
+    "streaming_tv": "Yes",
+    "streaming_movies": "Yes",
 }
 
 
@@ -43,7 +52,9 @@ def predictor():
 
 def test_cross_validation_returns_valid_scores(trainer, evaluator):
     model = LogisticRegression(max_iter=1000)
-    cv_results = evaluator.cross_validate_model(model, trainer.X_train, trainer.y_train, cv=5)
+    cv_results = evaluator.cross_validate_model(
+        model, trainer.X_train, trainer.y_train, cv=5
+    )
 
     for metric in ["accuracy", "auc", "f1"]:
         assert metric in cv_results
@@ -62,7 +73,9 @@ def test_tuned_model_has_higher_auc_than_baseline(trainer, evaluator):
     baseline = trainer.load_model("random_forest")
     tuned = trainer.load_model("random_forest_tuned")
 
-    baseline_auc = evaluator.evaluate_model(baseline, trainer.X_test, trainer.y_test)["auc"]
+    baseline_auc = evaluator.evaluate_model(baseline, trainer.X_test, trainer.y_test)[
+        "auc"
+    ]
     tuned_auc = evaluator.evaluate_model(tuned, trainer.X_test, trainer.y_test)["auc"]
 
     assert tuned_auc > baseline_auc
@@ -84,7 +97,9 @@ def test_get_risk_segment_returns_valid_segment(predictor):
 
 def test_optimal_threshold_between_0_3_and_0_7():
     threshold_path = "models/optimal_threshold.txt"
-    assert os.path.exists(threshold_path), "models/optimal_threshold.txt not found — run find_optimal_threshold first"
+    assert os.path.exists(
+        threshold_path
+    ), "models/optimal_threshold.txt not found — run find_optimal_threshold first"
 
     with open(threshold_path) as f:
         threshold = float(f.read().strip())

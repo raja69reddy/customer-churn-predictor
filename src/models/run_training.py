@@ -1,4 +1,5 @@
 """Runs the full baseline model training + evaluation pipeline."""
+
 from datetime import datetime
 
 from sqlalchemy import text
@@ -14,7 +15,9 @@ def run() -> None:
     trainer = ModelTrainer()
     df = trainer.load_processed_data()
     trainer.split_data(df)
-    print(f"Loaded processed data: {df.shape[0]} rows, {len(trainer.get_feature_columns())} features")
+    print(
+        f"Loaded processed data: {df.shape[0]} rows, {len(trainer.get_feature_columns())} features"
+    )
 
     print("\nTraining baseline models...")
     models = {
@@ -27,10 +30,16 @@ def run() -> None:
     evaluator = ModelEvaluator()
     print("\nModel Comparison:")
     comparison = evaluator.compare_models(models, trainer.X_test, trainer.y_test)
-    comparison = comparison.rename(columns={
-        "model": "Model", "accuracy": "Accuracy", "auc": "AUC",
-        "f1": "F1", "precision": "Precision", "recall": "Recall",
-    })
+    comparison = comparison.rename(
+        columns={
+            "model": "Model",
+            "accuracy": "Accuracy",
+            "auc": "AUC",
+            "f1": "F1",
+            "precision": "Precision",
+            "recall": "Recall",
+        }
+    )
     print(comparison.to_string(index=False))
 
     best_row = comparison.iloc[0]

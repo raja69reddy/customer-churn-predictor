@@ -1,4 +1,5 @@
 """Data ingestion pipeline — loads customers.csv into raw_customers table."""
+
 import argparse
 import logging
 import time
@@ -17,11 +18,27 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 REQUIRED_COLUMNS = [
-    "customer_id", "gender", "senior_citizen", "partner", "dependents",
-    "tenure", "phone_service", "multiple_lines", "internet_service",
-    "online_security", "online_backup", "device_protection", "tech_support",
-    "streaming_tv", "streaming_movies", "contract", "paperless_billing",
-    "payment_method", "monthly_charges", "total_charges", "churn",
+    "customer_id",
+    "gender",
+    "senior_citizen",
+    "partner",
+    "dependents",
+    "tenure",
+    "phone_service",
+    "multiple_lines",
+    "internet_service",
+    "online_security",
+    "online_backup",
+    "device_protection",
+    "tech_support",
+    "streaming_tv",
+    "streaming_movies",
+    "contract",
+    "paperless_billing",
+    "payment_method",
+    "monthly_charges",
+    "total_charges",
+    "churn",
 ]
 
 
@@ -47,7 +64,9 @@ def validate(df: pd.DataFrame) -> pd.DataFrame:
     df[str_cols] = df[str_cols].apply(lambda s: s.str.strip())
 
     # convert total_charges to float (empty strings → NaN → 0)
-    df["total_charges"] = pd.to_numeric(df["total_charges"], errors="coerce").fillna(0.0)
+    df["total_charges"] = pd.to_numeric(df["total_charges"], errors="coerce").fillna(
+        0.0
+    )
 
     # validate uniqueness
     dupes = df["customer_id"].duplicated().sum()

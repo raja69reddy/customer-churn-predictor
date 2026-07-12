@@ -1,4 +1,5 @@
 """Data quality verification — prints key stats from raw_customers table."""
+
 import pandas as pd
 from src.utils.db import get_engine
 
@@ -19,7 +20,9 @@ def verify() -> None:
     churn_pct = df["churn"].value_counts(normalize=True).mul(100).round(1)
     print("\n[2] Churn distribution:")
     for label in ["Yes", "No"]:
-        print(f"    {label}: {churn_counts.get(label, 0):>5,}  ({churn_pct.get(label, 0):.1f}%)")
+        print(
+            f"    {label}: {churn_counts.get(label, 0):>5,}  ({churn_pct.get(label, 0):.1f}%)"
+        )
 
     print("\n[3] Gender distribution:")
     for val, cnt in df["gender"].value_counts().items():

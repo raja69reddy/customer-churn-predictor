@@ -1,4 +1,5 @@
 """Streamlit dashboard — main entry point."""
+
 import os
 import sys
 from datetime import datetime
@@ -41,13 +42,21 @@ def render_sidebar_filters() -> dict:
         "Risk Segment", ["All", "High", "Medium", "Low"], key="risk_segment"
     )
     contract = st.sidebar.selectbox(
-        "Contract Type", ["All", "Month-to-month", "One year", "Two year"], key="contract"
+        "Contract Type",
+        ["All", "Month-to-month", "One year", "Two year"],
+        key="contract",
     )
-    tenure_range = st.sidebar.slider("Tenure Range (months)", 0, 72, (0, 72), key="tenure_range")
+    tenure_range = st.sidebar.slider(
+        "Tenure Range (months)", 0, 72, (0, 72), key="tenure_range"
+    )
 
     render_cache_controls()
 
-    return {"risk_segment": risk_segment, "contract": contract, "tenure_range": tenure_range}
+    return {
+        "risk_segment": risk_segment,
+        "contract": contract,
+        "tenure_range": tenure_range,
+    }
 
 
 def render_cache_controls() -> None:
@@ -60,7 +69,9 @@ def render_cache_controls() -> None:
         st.session_state["last_updated"] = datetime.now()
         st.rerun()
 
-    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+    st.sidebar.caption(
+        f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}"
+    )
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)

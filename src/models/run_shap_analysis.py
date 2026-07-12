@@ -1,4 +1,5 @@
 """Runs SHAP analysis on the current best model (per model_registry.is_active)."""
+
 import pandas as pd
 
 from src.models.evaluate import ModelEvaluator
@@ -8,7 +9,9 @@ from src.utils.db import get_engine
 
 def run() -> None:
     engine = get_engine()
-    registry = pd.read_sql("SELECT * FROM model_registry WHERE is_active = TRUE", engine)
+    registry = pd.read_sql(
+        "SELECT * FROM model_registry WHERE is_active = TRUE", engine
+    )
     if registry.empty:
         raise RuntimeError("No active model found in model_registry.")
     best_model_name = registry.iloc[0]["model_name"]

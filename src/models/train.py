@@ -1,9 +1,11 @@
 """Baseline model training — loads processed_customers and trains classifiers."""
+
 import os
 from datetime import datetime
 
 import joblib
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import mlflow
@@ -13,7 +15,13 @@ import pandas as pd
 from lightgbm import LGBMClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
@@ -22,7 +30,13 @@ from src.models import mlflow_setup
 from src.utils.db import get_engine
 
 TARGET_COLUMN = "churn_label"
-NON_FEATURE_COLUMNS = ["customer_id", "churn_label", "churn_probability", "risk_segment", "created_at"]
+NON_FEATURE_COLUMNS = [
+    "customer_id",
+    "churn_label",
+    "churn_probability",
+    "risk_segment",
+    "created_at",
+]
 
 
 class ModelTrainer:
@@ -53,7 +67,9 @@ class ModelTrainer:
     def get_target_column(self) -> str:
         return TARGET_COLUMN
 
-    def split_data(self, df: pd.DataFrame, test_size: float = 0.2, random_state: int = 42):
+    def split_data(
+        self, df: pd.DataFrame, test_size: float = 0.2, random_state: int = 42
+    ):
         X = df[self.get_feature_columns()]
         y = df[self.get_target_column()]
 
@@ -87,16 +103,21 @@ class ModelTrainer:
 
     def _feature_importance_series(self, model):
         if hasattr(model, "feature_importances_"):
-            return pd.Series(model.feature_importances_, index=self.get_feature_columns())
+            return pd.Series(
+                model.feature_importances_, index=self.get_feature_columns()
+            )
         if hasattr(model, "coef_"):
             return pd.Series(np.abs(model.coef_[0]), index=self.get_feature_columns())
         if hasattr(model, "estimators_"):
             importances = [
-                est.feature_importances_ for est in model.estimators_
+                est.feature_importances_
+                for est in model.estimators_
                 if hasattr(est, "feature_importances_")
             ]
             if importances:
-                return pd.Series(np.mean(importances, axis=0), index=self.get_feature_columns())
+                return pd.Series(
+                    np.mean(importances, axis=0), index=self.get_feature_columns()
+                )
         return None
 
     def _plot_feature_importance(self, model, model_name: str):
@@ -120,21 +141,27 @@ class ModelTrainer:
         plt.close()
         return path
 
-    def _log_mlflow_run(self, model_name: str, params: dict, metrics: dict, model) -> str:
+    def _log_mlflow_run(
+        self, model_name: str, params: dict, metrics: dict, model
+    ) -> str:
         mlflow_setup.setup_experiment()
 
         with mlflow.start_run(run_name=model_name):
             mlflow.log_params(params)
             mlflow.log_metrics(metrics)
-            mlflow.set_tags({
-                "model_type": model_name,
-                "dataset_size": len(self.X_train) + len(self.X_test),
-                "date": datetime.now().strftime("%Y-%m-%d"),
-            })
+            mlflow.set_tags(
+                {
+                    "model_type": model_name,
+                    "dataset_size": len(self.X_train) + len(self.X_test),
+                    "date": datetime.now().strftime("%Y-%m-%d"),
+                }
+            )
             # cloudpickle (not the default skops format) is needed because skops does not
             # trust third-party estimator types like XGBClassifier/LGBMClassifier/VotingClassifier
             # wrapping them out of the box.
-            mlflow.sklearn.log_model(model, artifact_path="model", serialization_format="cloudpickle")
+            mlflow.sklearn.log_model(
+                model, artifact_path="model", serialization_format="cloudpickle"
+            )
 
             importance_path = self._plot_feature_importance(model, model_name)
             if importance_path:
@@ -152,7 +179,9 @@ class ModelTrainer:
 
         y_pred = model.predict(self.X_test)
         y_proba = model.predict_proba(self.X_test)[:, 1]
-        metrics = self._print_metrics("Logistic Regression", self.y_test, y_pred, y_proba)
+        metrics = self._print_metrics(
+            "Logistic Regression", self.y_test, y_pred, y_proba
+        )
 
         self.save_model(model, "logistic_regression")
         self._log_mlflow_run("Logistic Regression", params, metrics, model)
@@ -179,7 +208,9 @@ class ModelTrainer:
         y_proba = model.predict_proba(self.X_test)[:, 1]
         self._print_metrics("Random Forest", self.y_test, y_pred, y_proba)
 
-        importance = pd.Series(model.feature_importances_, index=self.get_feature_columns())
+        importance = pd.Series(
+            model.feature_importances_, index=self.get_feature_columns()
+        )
         importance = importance.sort_values(ascending=False)
         top15 = importance.head(15)
 
@@ -240,10 +271,14 @@ class ModelTrainer:
         best_model = grid_search.best_estimator_
         y_pred = best_model.predict(self.X_test)
         y_proba = best_model.predict_proba(self.X_test)[:, 1]
-        metrics = self._print_metrics("Random Forest (tuned)", self.y_test, y_pred, y_proba)
+        metrics = self._print_metrics(
+            "Random Forest (tuned)", self.y_test, y_pred, y_proba
+        )
 
         self.save_model(best_model, "random_forest_tuned")
-        self._log_mlflow_run("Random Forest (tuned)", grid_search.best_params_, metrics, best_model)
+        self._log_mlflow_run(
+            "Random Forest (tuned)", grid_search.best_params_, metrics, best_model
+        )
         return best_model, grid_search.best_params_
 
     def tune_xgboost(self):
@@ -257,8 +292,10 @@ class ModelTrainer:
 
         grid_search = GridSearchCV(
             XGBClassifier(
-                use_label_encoder=False, eval_metric="logloss",
-                random_state=42, n_jobs=1,
+                use_label_encoder=False,
+                eval_metric="logloss",
+                random_state=42,
+                n_jobs=1,
             ),
             param_grid=param_grid,
             cv=5,
@@ -276,7 +313,9 @@ class ModelTrainer:
         metrics = self._print_metrics("XGBoost (tuned)", self.y_test, y_pred, y_proba)
 
         self.save_model(best_model, "xgboost_tuned")
-        self._log_mlflow_run("XGBoost (tuned)", grid_search.best_params_, metrics, best_model)
+        self._log_mlflow_run(
+            "XGBoost (tuned)", grid_search.best_params_, metrics, best_model
+        )
         return best_model, grid_search.best_params_
 
     def train_lightgbm(self):
@@ -317,7 +356,9 @@ class ModelTrainer:
 
         y_pred = ensemble.predict(self.X_test)
         y_proba = ensemble.predict_proba(self.X_test)[:, 1]
-        ensemble_metrics = self._print_metrics("Ensemble (soft voting)", self.y_test, y_pred, y_proba)
+        ensemble_metrics = self._print_metrics(
+            "Ensemble (soft voting)", self.y_test, y_pred, y_proba
+        )
 
         print("\nComparison with individual models:")
         individuals = [
@@ -341,7 +382,10 @@ class ModelTrainer:
         self.save_model(ensemble, "ensemble")
         self._log_mlflow_run(
             "Ensemble",
-            {"voting": "soft", "estimators": "xgboost_tuned,lightgbm,random_forest_tuned"},
+            {
+                "voting": "soft",
+                "estimators": "xgboost_tuned,lightgbm,random_forest_tuned",
+            },
             ensemble_metrics,
             ensemble,
         )

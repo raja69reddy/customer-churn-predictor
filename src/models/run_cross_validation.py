@@ -1,4 +1,5 @@
 """Runs 5-fold stratified cross validation for all 4 baseline models."""
+
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -13,8 +14,12 @@ MODELS = {
     "decision_tree": DecisionTreeClassifier(max_depth=5, random_state=42),
     "random_forest": RandomForestClassifier(n_estimators=100, random_state=42),
     "xgboost": XGBClassifier(
-        n_estimators=100, max_depth=5, learning_rate=0.1,
-        use_label_encoder=False, eval_metric="logloss", random_state=42,
+        n_estimators=100,
+        max_depth=5,
+        learning_rate=0.1,
+        use_label_encoder=False,
+        eval_metric="logloss",
+        random_state=42,
     ),
 }
 
@@ -29,18 +34,26 @@ def run() -> None:
 
     for name, model in MODELS.items():
         print(f"\n=== {name} ===")
-        cv_results = evaluator.cross_validate_model(model, trainer.X_train, trainer.y_train, cv=5)
-        rows.append({
-            "model": name,
-            "accuracy_mean": cv_results["accuracy"].mean(),
-            "accuracy_std": cv_results["accuracy"].std(),
-            "auc_mean": cv_results["auc"].mean(),
-            "auc_std": cv_results["auc"].std(),
-            "f1_mean": cv_results["f1"].mean(),
-            "f1_std": cv_results["f1"].std(),
-        })
+        cv_results = evaluator.cross_validate_model(
+            model, trainer.X_train, trainer.y_train, cv=5
+        )
+        rows.append(
+            {
+                "model": name,
+                "accuracy_mean": cv_results["accuracy"].mean(),
+                "accuracy_std": cv_results["accuracy"].std(),
+                "auc_mean": cv_results["auc"].mean(),
+                "auc_std": cv_results["auc"].std(),
+                "f1_mean": cv_results["f1"].mean(),
+                "f1_std": cv_results["f1"].std(),
+            }
+        )
 
-    comparison = pd.DataFrame(rows).sort_values("auc_mean", ascending=False).reset_index(drop=True)
+    comparison = (
+        pd.DataFrame(rows)
+        .sort_values("auc_mean", ascending=False)
+        .reset_index(drop=True)
+    )
 
     print("\nCross Validation Comparison (mean +/- std):")
     for _, row in comparison.iterrows():

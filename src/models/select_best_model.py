@@ -1,4 +1,5 @@
 """Registers LightGBM/Ensemble results and flags the overall best model by AUC."""
+
 from datetime import datetime
 
 import pandas as pd
@@ -47,7 +48,10 @@ def run() -> None:
         best_id = int(best_row["id"])
 
         conn.execute(text("UPDATE model_registry SET is_active = FALSE"))
-        conn.execute(text("UPDATE model_registry SET is_active = TRUE WHERE id = :best_id"), {"best_id": best_id})
+        conn.execute(
+            text("UPDATE model_registry SET is_active = TRUE WHERE id = :best_id"),
+            {"best_id": best_id},
+        )
 
     print(f"Best model: {best_row['model_name']} with AUC: {best_row['auc_score']:.4f}")
 

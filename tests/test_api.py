@@ -1,4 +1,5 @@
 """Tests for the FastAPI prediction service, driven with httpx against the ASGI app."""
+
 import pytest
 from dotenv import load_dotenv
 

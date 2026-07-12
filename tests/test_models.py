@@ -1,4 +1,5 @@
 """Unit tests for trained baseline models and the model_registry table."""
+
 import pytest
 from dotenv import load_dotenv
 
@@ -44,29 +45,39 @@ def test_all_models_load_correctly(models):
 def test_model_predictions_are_valid_probabilities(trainer, models):
     for name, model in models.items():
         y_proba = model.predict_proba(trainer.X_test)[:, 1]
-        assert (y_proba >= 0).all() and (y_proba <= 1).all(), f"{name} produced probabilities outside [0, 1]"
+        assert (y_proba >= 0).all() and (
+            y_proba <= 1
+        ).all(), f"{name} produced probabilities outside [0, 1]"
 
 
 def test_model_accuracy_above_70_percent(trainer, models):
     evaluator = ModelEvaluator()
     for name, model in models.items():
         metrics = evaluator.evaluate_model(model, trainer.X_test, trainer.y_test)
-        assert metrics["accuracy"] > 0.70, f"{name} accuracy {metrics['accuracy']:.4f} is not above 70%"
+        assert (
+            metrics["accuracy"] > 0.70
+        ), f"{name} accuracy {metrics['accuracy']:.4f} is not above 70%"
 
 
 def test_model_auc_above_0_75(trainer, models):
     evaluator = ModelEvaluator()
     for name, model in models.items():
         metrics = evaluator.evaluate_model(model, trainer.X_test, trainer.y_test)
-        assert metrics["auc"] > 0.75, f"{name} AUC {metrics['auc']:.4f} is not above 0.75"
+        assert (
+            metrics["auc"] > 0.75
+        ), f"{name} AUC {metrics['auc']:.4f} is not above 0.75"
 
 
 def test_model_registry_has_4_entries(registry):
     # Day 6 tuning adds extra rows (e.g. random_forest_tuned, xgboost_tuned) on top of the
     # 4 Day 5 baseline models, so the registry grows over time — check the baseline floor instead
     # of an exact count.
-    assert len(registry) >= 4, f"Expected at least 4 model_registry entries, found {len(registry)}"
-    assert set(MODEL_NAMES).issubset(set(registry["model_name"])), "Missing one or more baseline models in model_registry"
+    assert (
+        len(registry) >= 4
+    ), f"Expected at least 4 model_registry entries, found {len(registry)}"
+    assert set(MODEL_NAMES).issubset(
+        set(registry["model_name"])
+    ), "Missing one or more baseline models in model_registry"
 
 
 def test_best_model_has_is_active_true(registry):

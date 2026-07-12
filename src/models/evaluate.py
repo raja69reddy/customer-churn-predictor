@@ -1,8 +1,10 @@
 """Model evaluation — metrics, ROC curves, confusion matrices, and comparison reports."""
+
 import os
 
 import numpy as np
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,7 +38,9 @@ class ModelEvaluator:
             "recall": recall_score(y_test, y_pred),
         }
 
-    def plot_roc_curve(self, model, X_test, y_test, model_name, ax=None, save_path=None):
+    def plot_roc_curve(
+        self, model, X_test, y_test, model_name, ax=None, save_path=None
+    ):
         y_proba = model.predict_proba(X_test)[:, 1]
         fpr, tpr, _ = roc_curve(y_test, y_proba)
         auc_score = roc_auc_score(y_test, y_proba)
@@ -61,7 +65,9 @@ class ModelEvaluator:
 
         return auc_score
 
-    def plot_confusion_matrix(self, model, X_test, y_test, model_name, ax=None, save_path=None):
+    def plot_confusion_matrix(
+        self, model, X_test, y_test, model_name, ax=None, save_path=None
+    ):
         y_pred = model.predict(X_test)
         cm = confusion_matrix(y_test, y_pred)
 
@@ -70,8 +76,13 @@ class ModelEvaluator:
             fig, ax = plt.subplots(figsize=(5, 4))
 
         sns.heatmap(
-            cm, annot=True, fmt="d", cmap="Blues", ax=ax,
-            xticklabels=["No Churn", "Churn"], yticklabels=["No Churn", "Churn"],
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            ax=ax,
+            xticklabels=["No Churn", "Churn"],
+            yticklabels=["No Churn", "Churn"],
         )
         ax.set_xlabel("Predicted")
         ax.set_ylabel("Actual")
@@ -92,7 +103,11 @@ class ModelEvaluator:
             metrics = self.evaluate_model(model, X_test, y_test)
             rows.append({"model": name, **metrics})
 
-        comparison = pd.DataFrame(rows).sort_values("auc", ascending=False).reset_index(drop=True)
+        comparison = (
+            pd.DataFrame(rows)
+            .sort_values("auc", ascending=False)
+            .reset_index(drop=True)
+        )
         print(comparison.to_string(index=False))
         return comparison
 
@@ -106,7 +121,10 @@ class ModelEvaluator:
     def cross_validate_model(self, model, X, y, cv: int = 5) -> dict:
         skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
         scores = cross_validate(
-            model, X, y, cv=skf,
+            model,
+            X,
+            y,
+            cv=skf,
             scoring=["accuracy", "roc_auc", "f1"],
         )
 
@@ -122,7 +140,12 @@ class ModelEvaluator:
 
         return cv_results
 
-    def plot_cv_results(self, cv_results: dict, model_name: str, save_path: str = "data/processed/cv_results.png"):
+    def plot_cv_results(
+        self,
+        cv_results: dict,
+        model_name: str,
+        save_path: str = "data/processed/cv_results.png",
+    ):
         fig, ax = plt.subplots(figsize=(7, 5))
         labels = list(cv_results.keys())
         data = [cv_results[label] for label in labels]
@@ -142,7 +165,9 @@ class ModelEvaluator:
 
         X_test = X_test.astype(float)
         try:
-            explainer = shap.TreeExplainer(model, feature_perturbation="tree_path_dependent")
+            explainer = shap.TreeExplainer(
+                model, feature_perturbation="tree_path_dependent"
+            )
         except Exception:
             explainer = shap.Explainer(model, X_test)
         shap_values = explainer(X_test)
@@ -150,7 +175,9 @@ class ModelEvaluator:
         plt.figure()
         shap.summary_plot(shap_values, X_test, show=False)
         plt.tight_layout()
-        plt.savefig(os.path.join(save_dir, "shap_summary_beeswarm.png"), bbox_inches="tight")
+        plt.savefig(
+            os.path.join(save_dir, "shap_summary_beeswarm.png"), bbox_inches="tight"
+        )
         plt.close()
 
         plt.figure()
@@ -162,7 +189,11 @@ class ModelEvaluator:
         return shap_values
 
     def get_top_features(self, shap_values, n: int = 15) -> pd.Series:
-        values = shap_values.values if hasattr(shap_values, "values") else np.asarray(shap_values)
+        values = (
+            shap_values.values
+            if hasattr(shap_values, "values")
+            else np.asarray(shap_values)
+        )
         if values.ndim == 3:
             values = values[:, :, -1]
 
@@ -171,7 +202,11 @@ class ModelEvaluator:
             feature_names = [f"feature_{i}" for i in range(values.shape[1])]
 
         mean_abs_shap = np.abs(values).mean(axis=0)
-        ranking = pd.Series(mean_abs_shap, index=feature_names).sort_values(ascending=False).head(n)
+        ranking = (
+            pd.Series(mean_abs_shap, index=feature_names)
+            .sort_values(ascending=False)
+            .head(n)
+        )
 
         print(f"Top {len(ranking)} features by mean |SHAP value|:")
         for rank, (feature, value) in enumerate(ranking.items(), start=1):
@@ -180,7 +215,11 @@ class ModelEvaluator:
         return ranking
 
     def plot_precision_recall_curve(
-        self, model, X_test, y_test, model_name: str = "model",
+        self,
+        model,
+        X_test,
+        y_test,
+        model_name: str = "model",
         save_path: str = "data/processed/precision_recall_curve.png",
     ):
         y_proba = model.predict_proba(X_test)[:, 1]
@@ -193,7 +232,10 @@ class ModelEvaluator:
         fig, ax = plt.subplots(figsize=(7, 6))
         ax.plot(recall, precision, label=f"{model_name}")
         ax.scatter(
-            recall[best_idx], precision[best_idx], color="red", zorder=5,
+            recall[best_idx],
+            precision[best_idx],
+            color="red",
+            zorder=5,
             label=f"Optimal threshold = {best_threshold:.2f} (F1 = {f1_scores[best_idx]:.3f})",
         )
         ax.set_xlabel("Recall")
@@ -206,4 +248,9 @@ class ModelEvaluator:
         plt.savefig(save_path)
         plt.close(fig)
 
-        return {"precision": precision, "recall": recall, "thresholds": thresholds, "best_threshold": best_threshold}
+        return {
+            "precision": precision,
+            "recall": recall,
+            "thresholds": thresholds,
+            "best_threshold": best_threshold,
+        }

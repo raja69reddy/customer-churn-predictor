@@ -1,4 +1,5 @@
 """Unit tests for FeatureEngineer (src/features/engineering.py)."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -11,26 +12,88 @@ from src.features.engineering import FeatureEngineer
 
 @pytest.fixture
 def sample_df():
-    return pd.DataFrame({
-        "customer_id": ["C1", "C2", "C3", "C4", "C5", "C6"],
-        "tenure": [5, 15, 30, 60, 1, 72],
-        "monthly_charges": [50.0, 60.0, 70.0, 80.0, 20.0, 100.0],
-        "total_charges": [250.0, 900.0, 2100.0, 4800.0, 20.0, 7200.0],
-        "contract": ["Month-to-month", "One year", "Two year", "Month-to-month", "One year", "Two year"],
-        "payment_method": [
-            "Electronic check", "Mailed check", "Bank transfer (automatic)",
-            "Credit card (automatic)", "Electronic check", "Mailed check",
-        ],
-        "phone_service": ["Yes", "Yes", "No", "Yes", "No", "Yes"],
-        "internet_service": ["DSL", "Fiber optic", "No", "DSL", "No", "Fiber optic"],
-        "online_security": ["Yes", "No", "No internet service", "Yes", "No internet service", "No"],
-        "online_backup": ["No", "No", "No internet service", "Yes", "No internet service", "Yes"],
-        "device_protection": ["No", "No", "No internet service", "Yes", "No internet service", "Yes"],
-        "tech_support": ["No", "No", "No internet service", "Yes", "No internet service", "No"],
-        "streaming_tv": ["No", "Yes", "No internet service", "Yes", "No internet service", "Yes"],
-        "streaming_movies": ["No", "Yes", "No internet service", "Yes", "No internet service", "Yes"],
-        "churn": ["Yes", "No", "No", "Yes", "No", "No"],
-    })
+    return pd.DataFrame(
+        {
+            "customer_id": ["C1", "C2", "C3", "C4", "C5", "C6"],
+            "tenure": [5, 15, 30, 60, 1, 72],
+            "monthly_charges": [50.0, 60.0, 70.0, 80.0, 20.0, 100.0],
+            "total_charges": [250.0, 900.0, 2100.0, 4800.0, 20.0, 7200.0],
+            "contract": [
+                "Month-to-month",
+                "One year",
+                "Two year",
+                "Month-to-month",
+                "One year",
+                "Two year",
+            ],
+            "payment_method": [
+                "Electronic check",
+                "Mailed check",
+                "Bank transfer (automatic)",
+                "Credit card (automatic)",
+                "Electronic check",
+                "Mailed check",
+            ],
+            "phone_service": ["Yes", "Yes", "No", "Yes", "No", "Yes"],
+            "internet_service": [
+                "DSL",
+                "Fiber optic",
+                "No",
+                "DSL",
+                "No",
+                "Fiber optic",
+            ],
+            "online_security": [
+                "Yes",
+                "No",
+                "No internet service",
+                "Yes",
+                "No internet service",
+                "No",
+            ],
+            "online_backup": [
+                "No",
+                "No",
+                "No internet service",
+                "Yes",
+                "No internet service",
+                "Yes",
+            ],
+            "device_protection": [
+                "No",
+                "No",
+                "No internet service",
+                "Yes",
+                "No internet service",
+                "Yes",
+            ],
+            "tech_support": [
+                "No",
+                "No",
+                "No internet service",
+                "Yes",
+                "No internet service",
+                "No",
+            ],
+            "streaming_tv": [
+                "No",
+                "Yes",
+                "No internet service",
+                "Yes",
+                "No internet service",
+                "Yes",
+            ],
+            "streaming_movies": [
+                "No",
+                "Yes",
+                "No internet service",
+                "Yes",
+                "No internet service",
+                "Yes",
+            ],
+            "churn": ["Yes", "No", "No", "Yes", "No", "No"],
+        }
+    )
 
 
 @pytest.fixture(scope="module")
@@ -42,12 +105,12 @@ def test_tenure_group_creates_correct_buckets(sample_df):
     fe = FeatureEngineer()
     df = fe.create_tenure_group(sample_df)
     expected = {
-        "C1": "New Customer",       # tenure=5  -> 0-12
-        "C2": "Growing Customer",   # tenure=15 -> 12-24
+        "C1": "New Customer",  # tenure=5  -> 0-12
+        "C2": "Growing Customer",  # tenure=15 -> 12-24
         "C3": "Established Customer",  # tenure=30 -> 24-48
-        "C4": "Loyal Customer",     # tenure=60 -> 48+
-        "C5": "New Customer",       # tenure=1  -> 0-12
-        "C6": "Loyal Customer",     # tenure=72 -> 48+
+        "C4": "Loyal Customer",  # tenure=60 -> 48+
+        "C5": "New Customer",  # tenure=1  -> 0-12
+        "C6": "Loyal Customer",  # tenure=72 -> 48+
     }
     actual = dict(zip(df["customer_id"], df["tenure_group"].astype(str)))
     assert actual == expected
@@ -67,8 +130,10 @@ def test_payment_risk_score_values(sample_df):
     df = fe.create_payment_risk_score(sample_df)
     assert set(df["payment_risk_score"].unique()).issubset({1, 2, 3})
     expected = {
-        "Electronic check": 3, "Mailed check": 2,
-        "Bank transfer (automatic)": 1, "Credit card (automatic)": 1,
+        "Electronic check": 3,
+        "Mailed check": 2,
+        "Bank transfer (automatic)": 1,
+        "Credit card (automatic)": 1,
     }
     for method, score in zip(df["payment_method"], df["payment_risk_score"]):
         assert score == expected[method]

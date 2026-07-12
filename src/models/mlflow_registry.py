@@ -1,4 +1,5 @@
 """MLflow Model Registry operations — register, promote, and compare churn model runs."""
+
 import pandas as pd
 import mlflow
 import mlflow.sklearn
@@ -14,11 +15,17 @@ def register_best_model(registered_name: str = REGISTERED_MODEL_NAME):
 
     experiment = mlflow.get_experiment_by_name(mlflow_setup.EXPERIMENT_NAME)
     if experiment is None:
-        raise RuntimeError(f"MLflow experiment '{mlflow_setup.EXPERIMENT_NAME}' not found.")
+        raise RuntimeError(
+            f"MLflow experiment '{mlflow_setup.EXPERIMENT_NAME}' not found."
+        )
 
-    runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id], order_by=["metrics.auc DESC"])
+    runs = mlflow.search_runs(
+        experiment_ids=[experiment.experiment_id], order_by=["metrics.auc DESC"]
+    )
     if runs.empty:
-        raise RuntimeError("No MLflow runs found — run training with MLflow tracking first.")
+        raise RuntimeError(
+            "No MLflow runs found — run training with MLflow tracking first."
+        )
 
     best_run = runs.iloc[0]
     run_id = best_run["run_id"]
@@ -32,7 +39,9 @@ def register_best_model(registered_name: str = REGISTERED_MODEL_NAME):
     return result
 
 
-def promote_to_production(model_name: str = REGISTERED_MODEL_NAME, version: str = None) -> str:
+def promote_to_production(
+    model_name: str = REGISTERED_MODEL_NAME, version: str = None
+) -> str:
     mlflow_setup.configure_tracking()
     client = MlflowClient()
 
@@ -43,7 +52,10 @@ def promote_to_production(model_name: str = REGISTERED_MODEL_NAME, version: str 
         version = max(versions, key=lambda v: int(v.version)).version
 
     client.transition_model_version_stage(
-        name=model_name, version=version, stage="Production", archive_existing_versions=True,
+        name=model_name,
+        version=version,
+        stage="Production",
+        archive_existing_versions=True,
     )
     print(f"Promoted {model_name} version {version} to Production")
     return version

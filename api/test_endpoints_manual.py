@@ -4,6 +4,7 @@ Run this against a locally running server:
     uvicorn api.main:app --reload
     python -m api.test_endpoints_manual
 """
+
 import json
 
 import httpx
@@ -56,30 +57,55 @@ def main() -> None:
     batch = {
         "customers": [
             {**SAMPLE_CUSTOMER, "customer_id": "TEST-API-01"},
-            {**SAMPLE_CUSTOMER, "customer_id": "TEST-API-02", "contract": "Two year", "tenure": 60},
+            {
+                **SAMPLE_CUSTOMER,
+                "customer_id": "TEST-API-02",
+                "contract": "Two year",
+                "tenure": 60,
+            },
             {**SAMPLE_CUSTOMER, "customer_id": "TEST-API-03", "senior_citizen": 1},
         ]
     }
     show("POST /predict/batch", client.post("/predict/batch", json=batch))
 
-    show("GET /customers/high-risk", client.get("/customers/high-risk", params={"limit": 3}))
+    show(
+        "GET /customers/high-risk",
+        client.get("/customers/high-risk", params={"limit": 3}),
+    )
     show("GET /customers/risk-summary", client.get("/customers/risk-summary"))
     show("GET /customer/CUST-05036", client.get("/customer/CUST-05036"))
     show("GET /customer/CUST-05036/predict", client.get("/customer/CUST-05036/predict"))
-    show("GET /customer/CUST-05036/explanation", client.get("/customer/CUST-05036/explanation"))
+    show(
+        "GET /customer/CUST-05036/explanation",
+        client.get("/customer/CUST-05036/explanation"),
+    )
     show("GET /customer/NOPE (expect 404)", client.get("/customer/NOPE"))
 
     show("GET /analytics/churn-rate", client.get("/analytics/churn-rate"))
     show("GET /analytics/risk-distribution", client.get("/analytics/risk-distribution"))
     show("GET /analytics/revenue-at-risk", client.get("/analytics/revenue-at-risk"))
-    show("GET /analytics/top-features", client.get("/analytics/top-features", params={"limit": 5}))
+    show(
+        "GET /analytics/top-features",
+        client.get("/analytics/top-features", params={"limit": 5}),
+    )
     show("GET /analytics/retention-targets", client.get("/analytics/retention-targets"))
 
     bad_charges = {**SAMPLE_CUSTOMER, "customer_id": "BAD-001", "monthly_charges": -5}
-    show("POST /predict invalid monthly_charges (expect 422)", client.post("/predict", json=bad_charges))
+    show(
+        "POST /predict invalid monthly_charges (expect 422)",
+        client.post("/predict", json=bad_charges),
+    )
 
-    bad_total = {**SAMPLE_CUSTOMER, "customer_id": "BAD-002", "total_charges": 0, "monthly_charges": 500}
-    show("POST /predict invalid total_charges (expect 422)", client.post("/predict", json=bad_total))
+    bad_total = {
+        **SAMPLE_CUSTOMER,
+        "customer_id": "BAD-002",
+        "total_charges": 0,
+        "monthly_charges": 500,
+    }
+    show(
+        "POST /predict invalid total_charges (expect 422)",
+        client.post("/predict", json=bad_total),
+    )
 
     print("\nAll endpoints exercised successfully.")
 

@@ -1,5 +1,7 @@
 """Plots ROC curves for all 4 trained baseline models on a single chart."""
+
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -21,7 +23,9 @@ def run() -> None:
 
     for name, color in zip(MODEL_NAMES, COLORS):
         model = trainer.load_model(name)
-        auc_score = evaluator.plot_roc_curve(model, trainer.X_test, trainer.y_test, name, ax=ax)
+        auc_score = evaluator.plot_roc_curve(
+            model, trainer.X_test, trainer.y_test, name, ax=ax
+        )
         ax.lines[-1].set_color(color)
         print(f"{name}: AUC = {auc_score:.4f}")
 

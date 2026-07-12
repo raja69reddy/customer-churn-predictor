@@ -1,4 +1,5 @@
 """Retrains all 6 leaderboard models with full MLflow tracking."""
+
 from src.models.train import ModelTrainer
 
 
@@ -29,6 +30,7 @@ def run() -> None:
 
     import mlflow
     from src.models import mlflow_setup
+
     mlflow_setup.configure_tracking()
     runs = mlflow.search_runs(
         experiment_names=[mlflow_setup.EXPERIMENT_NAME],

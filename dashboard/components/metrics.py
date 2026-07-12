@@ -1,4 +1,5 @@
 """Reusable KPI card components and formatting helpers for the Streamlit dashboard."""
+
 import streamlit as st
 
 RISK_COLORS = {"High": "#d62728", "Medium": "#ff7f0e", "Low": "#2ca02c"}
@@ -20,7 +21,9 @@ def get_risk_color(segment: str) -> str:
     return RISK_COLORS.get(segment, "#7f7f7f")
 
 
-def display_kpi_card(title: str, value, delta: str = None, color: str = DEFAULT_COLOR) -> None:
+def display_kpi_card(
+    title: str, value, delta: str = None, color: str = DEFAULT_COLOR
+) -> None:
     """Renders a single colored KPI card with a title, big value, and optional delta caption."""
     delta_html = (
         f"<div style='font-size:0.85rem; color:gray; margin-top:2px;'>{delta}</div>"

@@ -1,4 +1,5 @@
 """Reusable PostgreSQL data-access helpers for the churn prediction API."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -17,7 +18,9 @@ def get_customer_from_db(customer_id: str) -> Optional[dict]:
     """Returns a customer's raw_customers row as a dict, or None if not found."""
     engine = get_engine()
     df = pd.read_sql(
-        "SELECT * FROM raw_customers WHERE customer_id = %(cid)s", engine, params={"cid": customer_id}
+        "SELECT * FROM raw_customers WHERE customer_id = %(cid)s",
+        engine,
+        params={"cid": customer_id},
     )
     if df.empty:
         return None
@@ -39,7 +42,10 @@ def save_prediction_to_db(prediction: dict) -> None:
             ),
             {"cid": customer_id},
         )
-        conn.execute(text("DELETE FROM churn_predictions WHERE customer_id = :cid"), {"cid": customer_id})
+        conn.execute(
+            text("DELETE FROM churn_predictions WHERE customer_id = :cid"),
+            {"cid": customer_id},
+        )
         conn.execute(
             text(
                 "INSERT INTO churn_predictions "
@@ -62,7 +68,8 @@ def get_high_risk_customers(limit: int = 100) -> list[dict]:
     df = pd.read_sql(
         "SELECT * FROM vw_churn_predictions WHERE risk_segment = 'High' "
         "ORDER BY churn_probability DESC LIMIT %(limit)s",
-        engine, params={"limit": limit},
+        engine,
+        params={"limit": limit},
     )
     return _records(df)
 

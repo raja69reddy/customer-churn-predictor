@@ -1,4 +1,5 @@
 """Unit tests for the ingestion pipeline and raw CSV data quality."""
+
 import os
 import pytest
 import pandas as pd
@@ -6,11 +7,27 @@ import pandas as pd
 CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "raw", "customers.csv")
 
 REQUIRED_COLUMNS = [
-    "customer_id", "gender", "senior_citizen", "partner", "dependents",
-    "tenure", "phone_service", "multiple_lines", "internet_service",
-    "online_security", "online_backup", "device_protection", "tech_support",
-    "streaming_tv", "streaming_movies", "contract", "paperless_billing",
-    "payment_method", "monthly_charges", "total_charges", "churn",
+    "customer_id",
+    "gender",
+    "senior_citizen",
+    "partner",
+    "dependents",
+    "tenure",
+    "phone_service",
+    "multiple_lines",
+    "internet_service",
+    "online_security",
+    "online_backup",
+    "device_protection",
+    "tech_support",
+    "streaming_tv",
+    "streaming_movies",
+    "contract",
+    "paperless_billing",
+    "payment_method",
+    "monthly_charges",
+    "total_charges",
+    "churn",
 ]
 
 

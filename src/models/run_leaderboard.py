@@ -1,4 +1,5 @@
 """Builds the final leaderboard across all 6 models, sorted by AUC."""
+
 from src.models.evaluate import ModelEvaluator
 from src.models.train import ModelTrainer
 
@@ -22,7 +23,16 @@ def run() -> None:
     evaluator = ModelEvaluator()
     print("Final Model Leaderboard:")
     leaderboard = evaluator.compare_models(models, trainer.X_test, trainer.y_test)
-    leaderboard = leaderboard.rename(columns={"model": "Model", "accuracy": "Accuracy", "auc": "AUC", "f1": "F1", "precision": "Precision", "recall": "Recall"})
+    leaderboard = leaderboard.rename(
+        columns={
+            "model": "Model",
+            "accuracy": "Accuracy",
+            "auc": "AUC",
+            "f1": "F1",
+            "precision": "Precision",
+            "recall": "Recall",
+        }
+    )
 
     leaderboard.to_csv("data/processed/final_model_leaderboard.csv", index=False)
     print("\nSaved leaderboard to data/processed/final_model_leaderboard.csv")

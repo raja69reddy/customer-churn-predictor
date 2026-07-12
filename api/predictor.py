@@ -1,4 +1,5 @@
 """API-facing predictor — wraps ChurnPredictor's feature engineering with the MLflow Production model."""
+
 from datetime import datetime
 
 import pandas as pd
@@ -26,10 +27,14 @@ class APIPredictor:
         versions = client.search_model_versions(f"name='{registered_name}'")
         production = [v for v in versions if v.current_stage == "Production"]
         if not production:
-            raise RuntimeError(f"No Production version found for '{registered_name}' in MLflow registry.")
+            raise RuntimeError(
+                f"No Production version found for '{registered_name}' in MLflow registry."
+            )
         version = production[0].version
 
-        self._churn_predictor.model = mlflow_registry.get_production_model(registered_name)
+        self._churn_predictor.model = mlflow_registry.get_production_model(
+            registered_name
+        )
         self.model_name = registered_name
         self.model_version = f"{registered_name}_v{version}"
         self._churn_predictor.model_name = self.model_version
@@ -49,7 +54,9 @@ class APIPredictor:
 
         result = self._churn_predictor.predict_single(customer_dict)
         factors = self._churn_predictor.explain_prediction(customer_dict, top_n=5)
-        actions = RETENTION_ACTIONS.get(result["risk_segment"], RETENTION_ACTIONS["Low"])
+        actions = RETENTION_ACTIONS.get(
+            result["risk_segment"], RETENTION_ACTIONS["Low"]
+        )
 
         return PredictionOutput(
             customer_id=customer_input.customer_id or "UNSPECIFIED",
@@ -91,10 +98,16 @@ class APIPredictor:
         if not registry_row.empty:
             row = registry_row.iloc[0]
             trained_at = row["trained_at"]
-            info.update({
-                "accuracy": float(row["accuracy"]),
-                "auc_score": float(row["auc_score"]),
-                "f1_score": float(row["f1_score"]),
-                "trained_at": trained_at.isoformat() if hasattr(trained_at, "isoformat") else str(trained_at),
-            })
+            info.update(
+                {
+                    "accuracy": float(row["accuracy"]),
+                    "auc_score": float(row["auc_score"]),
+                    "f1_score": float(row["f1_score"]),
+                    "trained_at": (
+                        trained_at.isoformat()
+                        if hasattr(trained_at, "isoformat")
+                        else str(trained_at)
+                    ),
+                }
+            )
         return info

@@ -1,5 +1,7 @@
 """Plots confusion matrices for all 4 trained baseline models in a 2x2 grid."""
+
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -20,7 +22,9 @@ def run() -> None:
 
     for name, ax in zip(MODEL_NAMES, axes.flatten()):
         model = trainer.load_model(name)
-        cm = evaluator.plot_confusion_matrix(model, trainer.X_test, trainer.y_test, name, ax=ax)
+        cm = evaluator.plot_confusion_matrix(
+            model, trainer.X_test, trainer.y_test, name, ax=ax
+        )
         tn, fp, fn, tp = cm.ravel()
         print(f"{name}: TP={tp}  FP={fp}  TN={tn}  FN={fn}")
 

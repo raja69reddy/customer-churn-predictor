@@ -1,4 +1,5 @@
 """FastAPI prediction service for the customer churn predictor."""
+
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -16,9 +17,15 @@ from api.database import (
     get_risk_summary as db_get_risk_summary,
     save_prediction_to_db,
 )
-from api.models import BatchPredictionInput, BatchPredictionOutput, CustomerInput, PredictionOutput
+from api.models import (
+    BatchPredictionInput,
+    BatchPredictionOutput,
+    CustomerInput,
+    PredictionOutput,
+)
 from api.predictor import APIPredictor
 from src.utils.db import get_engine
+
 
 def _df_to_records(df: pd.DataFrame) -> list[dict]:
     """Converts a DataFrame to JSON-safe records, turning NaN/NaT into None."""
@@ -26,10 +33,25 @@ def _df_to_records(df: pd.DataFrame) -> list[dict]:
 
 
 CUSTOMER_INPUT_FIELDS = [
-    "gender", "senior_citizen", "partner", "dependents", "tenure", "phone_service",
-    "multiple_lines", "internet_service", "online_security", "online_backup",
-    "device_protection", "tech_support", "streaming_tv", "streaming_movies",
-    "contract", "paperless_billing", "payment_method", "monthly_charges", "total_charges",
+    "gender",
+    "senior_citizen",
+    "partner",
+    "dependents",
+    "tenure",
+    "phone_service",
+    "multiple_lines",
+    "internet_service",
+    "online_security",
+    "online_backup",
+    "device_protection",
+    "tech_support",
+    "streaming_tv",
+    "streaming_movies",
+    "contract",
+    "paperless_billing",
+    "payment_method",
+    "monthly_charges",
+    "total_charges",
 ]
 
 logging.basicConfig(
@@ -74,7 +96,13 @@ async def log_requests(request: Request, call_next):
     start = time.time()
     response = await call_next(request)
     elapsed_ms = (time.time() - start) * 1000
-    log.info("%s %s -> %s (%.1fms)", request.method, request.url.path, response.status_code, elapsed_ms)
+    log.info(
+        "%s %s -> %s (%.1fms)",
+        request.method,
+        request.url.path,
+        response.status_code,
+        elapsed_ms,
+    )
     return response
 
 
@@ -83,7 +111,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     log.error("Unhandled error on %s %s: %s", request.method, request.url.path, exc)
     return JSONResponse(
         status_code=500,
-        content={"detail": "An internal error occurred while processing your request. Please try again later."},
+        content={
+            "detail": "An internal error occurred while processing your request. Please try again later."
+        },
     )
 
 
@@ -105,6 +135,7 @@ def health():
 # ---------------------------------------------------------------------------
 # Prediction endpoints
 # ---------------------------------------------------------------------------
+
 
 def _run_model(fn, *args, **kwargs):
     """Runs a predictor call, converting unexpected model/runtime failures into a friendly 500."""
@@ -151,10 +182,13 @@ def model_performance():
 # Customer lookup endpoints
 # ---------------------------------------------------------------------------
 
+
 def _load_customer_row(customer_id: str) -> dict:
     customer = get_customer_from_db(customer_id)
     if customer is None:
-        raise HTTPException(status_code=404, detail=f"Customer '{customer_id}' not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Customer '{customer_id}' not found."
+        )
     return customer
 
 
@@ -168,7 +202,9 @@ def get_customer(customer_id: str):
 def predict_customer(customer_id: str):
     """Scores an existing customer (by ID) for churn risk and persists the prediction."""
     customer = _load_customer_row(customer_id)
-    customer_input = CustomerInput(customer_id=customer_id, **{f: customer[f] for f in CUSTOMER_INPUT_FIELDS})
+    customer_input = CustomerInput(
+        customer_id=customer_id, **{f: customer[f] for f in CUSTOMER_INPUT_FIELDS}
+    )
     result = _run_model(predictor.predict, customer_input)
     save_prediction_to_db(result.model_dump())
     return result
@@ -200,6 +236,7 @@ def risk_summary():
 # Analytics endpoints
 # ---------------------------------------------------------------------------
 
+
 @app.get("/analytics/churn-rate")
 def churn_rate():
     """Returns the overall historical churn rate from raw_customers."""
@@ -211,7 +248,8 @@ def risk_distribution():
     """Returns customer counts per predicted risk segment."""
     engine = get_engine()
     df = pd.read_sql(
-        "SELECT risk_segment, COUNT(*) AS customer_count FROM churn_predictions GROUP BY risk_segment", engine
+        "SELECT risk_segment, COUNT(*) AS customer_count FROM churn_predictions GROUP BY risk_segment",
+        engine,
     )
     return _df_to_records(df)
 
@@ -234,9 +272,13 @@ def top_features(limit: int = 15):
 def retention_targets():
     """Returns retention priority tier counts and revenue exposure."""
     df = pd.read_csv("data/processed/retention_targets.csv")
-    summary = df.groupby("priority_tier").agg(
-        customer_count=("customer_id", "count"),
-        avg_churn_probability=("churn_probability", "mean"),
-        total_monthly_revenue=("monthly_charges", "sum"),
-    ).reset_index()
+    summary = (
+        df.groupby("priority_tier")
+        .agg(
+            customer_count=("customer_id", "count"),
+            avg_churn_probability=("churn_probability", "mean"),
+            total_monthly_revenue=("monthly_charges", "sum"),
+        )
+        .reset_index()
+    )
     return _df_to_records(summary)

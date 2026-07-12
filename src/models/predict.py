@@ -1,4 +1,5 @@
 """Churn prediction — scores individual customers or batches with the active best model."""
+
 import os
 
 import joblib
@@ -26,9 +27,14 @@ RETENTION_ACTIONS = {
 }
 
 FEATURE_COLUMNS = [
-    "charge_per_month", "services_count", "contract_risk_score", "payment_risk_score",
-    "tenure_group_Established Customer", "tenure_group_Growing Customer",
-    "tenure_group_Loyal Customer", "tenure_group_New Customer",
+    "charge_per_month",
+    "services_count",
+    "contract_risk_score",
+    "payment_risk_score",
+    "tenure_group_Established Customer",
+    "tenure_group_Growing Customer",
+    "tenure_group_Loyal Customer",
+    "tenure_group_New Customer",
 ]
 
 
@@ -41,7 +47,9 @@ class ChurnPredictor:
 
     def load_best_model(self):
         engine = get_engine()
-        registry = pd.read_sql("SELECT * FROM model_registry WHERE is_active = TRUE", engine)
+        registry = pd.read_sql(
+            "SELECT * FROM model_registry WHERE is_active = TRUE", engine
+        )
         if registry.empty:
             raise RuntimeError("No active model found in model_registry.")
 
@@ -103,22 +111,31 @@ class ChurnPredictor:
         df = pd.DataFrame([customer_dict])
         X = self._engineer_features(df).astype(float)
 
-        explainer = shap.TreeExplainer(self.model, feature_perturbation="tree_path_dependent")
+        explainer = shap.TreeExplainer(
+            self.model, feature_perturbation="tree_path_dependent"
+        )
         shap_values = explainer(X)
         values = shap_values.values[0]
 
-        ranking = sorted(zip(X.columns, values), key=lambda pair: abs(pair[1]), reverse=True)
+        ranking = sorted(
+            zip(X.columns, values), key=lambda pair: abs(pair[1]), reverse=True
+        )
         top_factors = ranking[:top_n]
 
         return [
-            {"feature": feature, "shap_value": float(value), "direction": "increases risk" if value > 0 else "decreases risk"}
+            {
+                "feature": feature,
+                "shap_value": float(value),
+                "direction": "increases risk" if value > 0 else "decreases risk",
+            }
             for feature, value in top_factors
         ]
 
     def explain_with_gpt(self, customer_dict: dict, prediction: dict) -> str:
         top_factors = self.explain_prediction(customer_dict, top_n=3)
         factor_text = ", ".join(
-            f"{factor['feature'].replace('_', ' ')} ({factor['direction']})" for factor in top_factors
+            f"{factor['feature'].replace('_', ' ')} ({factor['direction']})"
+            for factor in top_factors
         )
 
         prompt = (
@@ -142,7 +159,9 @@ class ChurnPredictor:
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
-            print(f"OpenAI API call failed ({e}); falling back to template explanation.")
+            print(
+                f"OpenAI API call failed ({e}); falling back to template explanation."
+            )
             return self._fallback_explanation(prediction, top_factors)
 
     def _fallback_explanation(self, prediction: dict, top_factors: list) -> str:
@@ -155,7 +174,9 @@ class ChurnPredictor:
         )
 
     def format_explanation(self, explanation: str, prediction: dict) -> str:
-        actions = RETENTION_ACTIONS.get(prediction["risk_segment"], RETENTION_ACTIONS["Low"])
+        actions = RETENTION_ACTIONS.get(
+            prediction["risk_segment"], RETENTION_ACTIONS["Low"]
+        )
 
         lines = [
             "Churn Risk Explanation",

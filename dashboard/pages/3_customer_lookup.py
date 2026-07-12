@@ -1,4 +1,5 @@
 """Customer Lookup page — look up a single customer and run a live churn prediction."""
+
 import os
 import sys
 from datetime import datetime
@@ -7,7 +8,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from dashboard.components.metrics import get_risk_color
 from src.models.predict import RETENTION_ACTIONS, ChurnPredictor
@@ -28,7 +31,9 @@ def render_cache_controls() -> None:
         st.session_state["last_updated"] = datetime.now()
         st.rerun()
 
-    st.sidebar.caption(f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}")
+    st.sidebar.caption(
+        f"Last updated: {st.session_state['last_updated'].strftime('%Y-%m-%d %H:%M:%S')}"
+    )
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
@@ -42,21 +47,23 @@ def load_customer(customer_id: str) -> pd.DataFrame:
 
 
 def probability_gauge(probability: float, color: str):
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=probability * 100,
-        number={"suffix": "%"},
-        title={"text": "Churn Probability"},
-        gauge={
-            "axis": {"range": [0, 100]},
-            "bar": {"color": color},
-            "steps": [
-                {"range": [0, 40], "color": "#e6f4ea"},
-                {"range": [40, 70], "color": "#fdf0e0"},
-                {"range": [70, 100], "color": "#fbe4e2"},
-            ],
-        },
-    ))
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=probability * 100,
+            number={"suffix": "%"},
+            title={"text": "Churn Probability"},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": color},
+                "steps": [
+                    {"range": [0, 40], "color": "#e6f4ea"},
+                    {"range": [40, 70], "color": "#fdf0e0"},
+                    {"range": [70, 100], "color": "#fbe4e2"},
+                ],
+            },
+        )
+    )
     fig.update_layout(height=300, margin=dict(l=20, r=20, t=50, b=20))
     return fig
 
@@ -67,7 +74,9 @@ def render_profile_card(customer: pd.Series) -> None:
     with col1:
         st.markdown(f"**Customer ID:** {customer['customer_id']}")
         st.markdown(f"**Gender:** {customer['gender']}")
-        st.markdown(f"**Senior Citizen:** {'Yes' if customer['senior_citizen'] else 'No'}")
+        st.markdown(
+            f"**Senior Citizen:** {'Yes' if customer['senior_citizen'] else 'No'}"
+        )
         st.markdown(f"**Partner:** {customer['partner']}")
         st.markdown(f"**Dependents:** {customer['dependents']}")
     with col2:
@@ -133,7 +142,10 @@ def main() -> None:
 
     col1, col2 = st.columns([1, 1])
     with col1:
-        st.plotly_chart(probability_gauge(result["churn_probability"], color), use_container_width=True)
+        st.plotly_chart(
+            probability_gauge(result["churn_probability"], color),
+            use_container_width=True,
+        )
     with col2:
         st.markdown(
             f"<span style='background-color:{color}; color:white; padding:6px 16px; "

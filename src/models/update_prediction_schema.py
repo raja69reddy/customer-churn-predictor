@@ -1,4 +1,5 @@
 """Adds retention/monitoring columns to churn_predictions and backfills them for all rows."""
+
 import pandas as pd
 from sqlalchemy import text
 
@@ -12,10 +13,19 @@ ALTER_STATEMENTS = [
 ]
 
 RECOMMENDED_ACTIONS = {
-    ("High", "Tier1"): "Priority outreach: offer loyalty discount + contract upgrade incentive",
-    ("High", "Tier2"): "Standard outreach: satisfaction survey + modest loyalty discount",
+    (
+        "High",
+        "Tier1",
+    ): "Priority outreach: offer loyalty discount + contract upgrade incentive",
+    (
+        "High",
+        "Tier2",
+    ): "Standard outreach: satisfaction survey + modest loyalty discount",
     ("High", "Tier3"): "Low-cost outreach: email survey, monitor for escalation",
-    ("Medium", None): "Monitor closely; consider proactive engagement before next cycle",
+    (
+        "Medium",
+        None,
+    ): "Monitor closely; consider proactive engagement before next cycle",
     ("Low", None): "No action needed - monitor periodically",
 }
 
@@ -40,7 +50,9 @@ def run() -> None:
     with engine.begin() as conn:
         for statement in ALTER_STATEMENTS:
             conn.execute(text(statement))
-    print("Added retention_priority, recommended_action, estimated_revenue_at_risk, days_since_last_score columns")
+    print(
+        "Added retention_priority, recommended_action, estimated_revenue_at_risk, days_since_last_score columns"
+    )
 
     df = pd.read_sql(
         """
@@ -53,12 +65,17 @@ def run() -> None:
 
     df["retention_priority"] = None
     high_mask = df["risk_segment"] == "High"
-    df.loc[high_mask, "retention_priority"] = df.loc[high_mask, "monthly_charges"].apply(assign_retention_priority)
+    df.loc[high_mask, "retention_priority"] = df.loc[
+        high_mask, "monthly_charges"
+    ].apply(assign_retention_priority)
 
     df["recommended_action"] = df.apply(
-        lambda row: recommended_action(row["risk_segment"], row["retention_priority"]), axis=1
+        lambda row: recommended_action(row["risk_segment"], row["retention_priority"]),
+        axis=1,
     )
-    df["estimated_revenue_at_risk"] = (df["monthly_charges"] * df["churn_probability"]).round(2)
+    df["estimated_revenue_at_risk"] = (
+        df["monthly_charges"] * df["churn_probability"]
+    ).round(2)
 
     with engine.begin() as conn:
         for _, row in df.iterrows():

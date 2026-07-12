@@ -1,4 +1,5 @@
 """Feature engineering — builds engineered features from raw_customers for modeling."""
+
 import os
 
 import joblib
@@ -15,7 +16,12 @@ from src.utils.db import get_engine
 NUMERIC_COLS = ["tenure", "monthly_charges", "total_charges"]
 
 TENURE_BINS = [0, 12, 24, 48, np.inf]
-TENURE_LABELS = ["New Customer", "Growing Customer", "Established Customer", "Loyal Customer"]
+TENURE_LABELS = [
+    "New Customer",
+    "Growing Customer",
+    "Established Customer",
+    "Loyal Customer",
+]
 
 CONTRACT_RISK = {"Month-to-month": 3, "One year": 2, "Two year": 1}
 PAYMENT_RISK = {
@@ -26,16 +32,33 @@ PAYMENT_RISK = {
 }
 
 CATEGORICAL_COLS = [
-    "gender", "partner", "dependents", "phone_service", "multiple_lines",
-    "internet_service", "online_security", "online_backup", "device_protection",
-    "tech_support", "streaming_tv", "streaming_movies", "contract",
-    "paperless_billing", "payment_method",
+    "gender",
+    "partner",
+    "dependents",
+    "phone_service",
+    "multiple_lines",
+    "internet_service",
+    "online_security",
+    "online_backup",
+    "device_protection",
+    "tech_support",
+    "streaming_tv",
+    "streaming_movies",
+    "contract",
+    "paperless_billing",
+    "payment_method",
 ]
 
 SERVICE_COLS = [
-    "phone_service", "multiple_lines", "internet_service",
-    "online_security", "online_backup", "device_protection",
-    "tech_support", "streaming_tv", "streaming_movies",
+    "phone_service",
+    "multiple_lines",
+    "internet_service",
+    "online_security",
+    "online_backup",
+    "device_protection",
+    "tech_support",
+    "streaming_tv",
+    "streaming_movies",
 ]
 
 
@@ -57,7 +80,9 @@ class FeatureEngineer:
         # Avoid select_dtypes(include=["object", "str"]) here — combining "object" and "str"
         # raises TypeError on pandas 2.x, while pandas 3.x's new string backend needs "str"
         # explicitly. A manual dtype check works identically across both.
-        str_cols = [c for c in df.columns if df[c].dtype == object or df[c].dtype.name == "str"]
+        str_cols = [
+            c for c in df.columns if df[c].dtype == object or df[c].dtype.name == "str"
+        ]
         df[str_cols] = df[str_cols].apply(lambda s: s.str.strip())
 
         for col in NUMERIC_COLS:
@@ -145,20 +170,26 @@ class FeatureEngineer:
         return X_resampled, y_resampled
 
     def build_preprocessing_pipeline(self) -> ColumnTransformer:
-        numeric_pipeline = Pipeline(steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler()),
-        ])
+        numeric_pipeline = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="median")),
+                ("scaler", StandardScaler()),
+            ]
+        )
 
-        categorical_pipeline = Pipeline(steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ])
+        categorical_pipeline = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                ("encoder", OneHotEncoder(handle_unknown="ignore")),
+            ]
+        )
 
-        self.pipeline = ColumnTransformer(transformers=[
-            ("numeric", numeric_pipeline, NUMERIC_COLS),
-            ("categorical", categorical_pipeline, CATEGORICAL_COLS),
-        ])
+        self.pipeline = ColumnTransformer(
+            transformers=[
+                ("numeric", numeric_pipeline, NUMERIC_COLS),
+                ("categorical", categorical_pipeline, CATEGORICAL_COLS),
+            ]
+        )
         return self.pipeline
 
     def fit_transform(self, df: pd.DataFrame):

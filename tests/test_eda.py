@@ -1,4 +1,5 @@
 """Unit tests for the EDA summary script and raw_customers data quality."""
+
 import pytest
 from dotenv import load_dotenv
 
@@ -10,11 +11,27 @@ from src.data.eda_summary import generate_summary
 from src.utils.db import get_engine
 
 REQUIRED_COLUMNS = [
-    "customer_id", "gender", "senior_citizen", "partner", "dependents",
-    "tenure", "phone_service", "multiple_lines", "internet_service",
-    "online_security", "online_backup", "device_protection", "tech_support",
-    "streaming_tv", "streaming_movies", "contract", "paperless_billing",
-    "payment_method", "monthly_charges", "total_charges", "churn",
+    "customer_id",
+    "gender",
+    "senior_citizen",
+    "partner",
+    "dependents",
+    "tenure",
+    "phone_service",
+    "multiple_lines",
+    "internet_service",
+    "online_security",
+    "online_backup",
+    "device_protection",
+    "tech_support",
+    "streaming_tv",
+    "streaming_movies",
+    "contract",
+    "paperless_billing",
+    "payment_method",
+    "monthly_charges",
+    "total_charges",
+    "churn",
 ]
 
 
@@ -33,7 +50,9 @@ def test_eda_summary_runs_without_errors(df):
 
 def test_churn_rate_between_20_and_35_percent(df):
     churn_rate = (df["churn"] == "Yes").mean() * 100
-    assert 20 <= churn_rate <= 35, f"Churn rate {churn_rate:.2f}% outside expected 20-35% range"
+    assert (
+        20 <= churn_rate <= 35
+    ), f"Churn rate {churn_rate:.2f}% outside expected 20-35% range"
 
 
 def test_required_columns_exist(df):
@@ -52,6 +71,6 @@ def test_total_charges_at_least_monthly_charges(df):
     # instead of a strict >= so the test reflects real data rather than an idealized rule.
     tolerance = 10.0
     violations = df[df["total_charges"] < df["monthly_charges"] - tolerance]
-    assert violations.empty, (
-        f"{len(violations)} rows have total_charges more than ${tolerance} below monthly_charges"
-    )
+    assert (
+        violations.empty
+    ), f"{len(violations)} rows have total_charges more than ${tolerance} below monthly_charges"

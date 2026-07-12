@@ -1,4 +1,5 @@
 """Generate 7,043 realistic Telco-style customer churn records."""
+
 import os
 import numpy as np
 import pandas as pd
@@ -39,9 +40,7 @@ def generate(n: int = N, seed: int = SEED) -> pd.DataFrame:
         "No phone service",
         rng.choice(["Yes", "No"], n),
     )
-    internet_service = rng.choice(
-        ["DSL", "Fiber optic", "No"], n, p=[0.34, 0.44, 0.22]
-    )
+    internet_service = rng.choice(["DSL", "Fiber optic", "No"], n, p=[0.34, 0.44, 0.22])
 
     def internet_addon(has_internet, yes_prob=0.29):
         return np.where(
@@ -71,7 +70,9 @@ def generate(n: int = N, seed: int = SEED) -> pd.DataFrame:
     )
 
     # monthly charges depend on services
-    base = np.where(internet_service == "No", 20.0, np.where(internet_service == "DSL", 45.0, 70.0))
+    base = np.where(
+        internet_service == "No", 20.0, np.where(internet_service == "DSL", 45.0, 70.0)
+    )
     addon_count = (
         (online_security == "Yes").astype(float)
         + (online_backup == "Yes").astype(float)
@@ -81,7 +82,9 @@ def generate(n: int = N, seed: int = SEED) -> pd.DataFrame:
         + (streaming_movies == "Yes").astype(float)
         + (multiple_lines == "Yes").astype(float)
     )
-    monthly_charges = np.clip(base + addon_count * 7.0 + rng.normal(0, 3, n), 18.0, 118.0).round(2)
+    monthly_charges = np.clip(
+        base + addon_count * 7.0 + rng.normal(0, 3, n), 18.0, 118.0
+    ).round(2)
     total_charges = np.clip(
         monthly_charges * tenure + rng.normal(0, tenure * 2, n), 18.0, None
     ).round(2)
@@ -133,7 +136,9 @@ def generate(n: int = N, seed: int = SEED) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    os.makedirs(os.path.join(os.path.dirname(__file__), "..", "data", "raw"), exist_ok=True)
+    os.makedirs(
+        os.path.join(os.path.dirname(__file__), "..", "data", "raw"), exist_ok=True
+    )
     df = generate()
     out = os.path.normpath(OUTPUT)
     df.to_csv(out, index=False)

@@ -1,11 +1,14 @@
 """MLflow experiment tracking setup — shared tracking URI/experiment config for all scripts."""
+
 import os
 
 import mlflow
 
 EXPERIMENT_NAME = "customer-churn-predictor"
 
-_TRACKING_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "mlflow"))
+_TRACKING_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "mlflow")
+)
 _DB_PATH = os.path.join(_TRACKING_DIR, "mlflow.db").replace("\\", "/")
 _ARTIFACT_PATH = os.path.join(_TRACKING_DIR, "mlruns").replace("\\", "/")
 
@@ -23,7 +26,9 @@ def setup_experiment(name: str = EXPERIMENT_NAME) -> str:
 
     experiment = mlflow.get_experiment_by_name(name)
     if experiment is None:
-        experiment_id = mlflow.create_experiment(name, artifact_location=ARTIFACT_LOCATION)
+        experiment_id = mlflow.create_experiment(
+            name, artifact_location=ARTIFACT_LOCATION
+        )
     else:
         experiment_id = experiment.experiment_id
 

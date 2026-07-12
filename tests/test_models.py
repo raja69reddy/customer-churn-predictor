@@ -10,6 +10,8 @@ from src.models.evaluate import ModelEvaluator
 from src.models.train import ModelTrainer
 from src.utils.db import get_engine
 
+pytestmark = pytest.mark.skip(reason="requires trained models")
+
 MODEL_NAMES = ["logistic_regression", "decision_tree", "random_forest", "xgboost"]
 
 

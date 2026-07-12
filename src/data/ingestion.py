@@ -3,7 +3,6 @@
 import argparse
 import logging
 import time
-from pathlib import Path
 
 import pandas as pd
 from sqlalchemy import text

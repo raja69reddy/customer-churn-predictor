@@ -139,7 +139,8 @@ class ChurnPredictor:
         )
 
         prompt = (
-            f"A telecom customer has a predicted churn probability of {prediction['churn_probability']:.0%} "
+            "A telecom customer has a predicted churn probability of "
+            f"{prediction['churn_probability']:.0%} "
             f"(risk segment: {prediction['risk_segment']}). "
             f"The top contributing factors, from a SHAP explanation, are: {factor_text}. "
             "In 2-3 plain-English sentences, explain why this customer is likely to churn, "

@@ -3,10 +3,10 @@
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
-from src.models.evaluate import ModelEvaluator
-from src.models.train import ModelTrainer
+from src.models.evaluate import ModelEvaluator  # noqa: E402
+from src.models.train import ModelTrainer  # noqa: E402
 
 MODEL_NAMES = ["logistic_regression", "decision_tree", "random_forest", "xgboost"]
 COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]

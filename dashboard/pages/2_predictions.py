@@ -11,13 +11,16 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from dashboard.components.charts import probability_histogram, risk_segment_bar
-from dashboard.components.metrics import (
+from dashboard.components.charts import (  # noqa: E402
+    probability_histogram,
+    risk_segment_bar,
+)
+from dashboard.components.metrics import (  # noqa: E402
     display_kpi_row,
     format_number,
     format_percentage,
 )
-from src.utils.db import get_engine
+from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(page_title="Churn Predictions", page_icon="🔮", layout="wide")
 
@@ -63,7 +66,10 @@ def render_sidebar_filters() -> dict:
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_predictions(filters: dict) -> pd.DataFrame:
     engine = get_engine()
-    query = "SELECT * FROM vw_churn_predictions WHERE tenure BETWEEN %(tenure_min)s AND %(tenure_max)s"
+    query = (
+        "SELECT * FROM vw_churn_predictions "
+        "WHERE tenure BETWEEN %(tenure_min)s AND %(tenure_max)s"
+    )
     params = {
         "tenure_min": filters["tenure_range"][0],
         "tenure_max": filters["tenure_range"][1],

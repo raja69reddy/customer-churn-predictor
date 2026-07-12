@@ -7,22 +7,25 @@ from datetime import datetime
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import streamlit as st
-from sklearn.metrics import roc_auc_score, roc_curve
+import matplotlib.pyplot as plt  # noqa: E402
+import pandas as pd  # noqa: E402
+import plotly.express as px  # noqa: E402
+import plotly.graph_objects as go  # noqa: E402
+import streamlit as st  # noqa: E402
+from sklearn.metrics import roc_auc_score, roc_curve  # noqa: E402
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from dashboard.components.charts import feature_importance_bar, shap_summary_plot
-from dashboard.components.metrics import display_kpi_row, format_number
-from src.models.evaluate import ModelEvaluator
-from src.models.train import ModelTrainer
-from src.utils.db import get_engine
+from dashboard.components.charts import (  # noqa: E402
+    feature_importance_bar,
+    shap_summary_plot,
+)
+from dashboard.components.metrics import display_kpi_row, format_number  # noqa: E402
+from src.models.evaluate import ModelEvaluator  # noqa: E402
+from src.models.train import ModelTrainer  # noqa: E402
+from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(page_title="Model Performance", page_icon="🔮", layout="wide")
 

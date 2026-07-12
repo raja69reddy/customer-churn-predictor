@@ -1,17 +1,18 @@
-"""Analyzes MLflow experiment runs — best run lookup, history, comparison plots, and feature drift."""
+"""Analyzes MLflow experiment runs — best run lookup, history, comparison plots,
+and feature drift."""
 
 import os
 
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import mlflow
-import mlflow.sklearn
-import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt  # noqa: E402
+import mlflow  # noqa: E402
+import mlflow.sklearn  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
 
-from src.models import mlflow_setup
+from src.models import mlflow_setup  # noqa: E402
 
 
 def _all_runs() -> pd.DataFrame:

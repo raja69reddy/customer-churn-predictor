@@ -84,11 +84,13 @@ def run() -> None:
         registered = mlflow.register_model(f"runs:/{v2_run_id}/model", model_name)
         mlflow_registry.promote_to_production(model_name, registered.version)
         print(
-            f"\nv2 is better (AUC {v2_metrics['auc']:.4f} > {v1_auc:.4f}) — promoted to Production, v1 archived."
+            f"\nv2 is better (AUC {v2_metrics['auc']:.4f} > {v1_auc:.4f}) — "
+            "promoted to Production, v1 archived."
         )
     else:
         print(
-            f"\nv1 remains better or equal (AUC {v1_auc:.4f} >= {v2_metrics['auc']:.4f}) — keeping v1 as Production."
+            f"\nv1 remains better or equal (AUC {v1_auc:.4f} >= {v2_metrics['auc']:.4f}) — "
+            "keeping v1 as Production."
         )
 
 

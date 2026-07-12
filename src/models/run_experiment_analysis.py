@@ -11,7 +11,8 @@ from src.models.experiment_analyzer import (
 def run() -> None:
     best = get_best_run()
     print(
-        f"Best run: {best['tags.mlflow.runName']} (run_id={best['run_id']}, AUC={best['metrics.auc']:.4f})"
+        f"Best run: {best['tags.mlflow.runName']} "
+        f"(run_id={best['run_id']}, AUC={best['metrics.auc']:.4f})"
     )
 
     history = get_run_history()
@@ -44,7 +45,8 @@ def run() -> None:
     print("\nTop 3 best performing runs:")
     for i, (_, row) in enumerate(top3.iterrows(), start=1):
         print(
-            f"    {i}. {row['tags.mlflow.runName']} — AUC={row['metrics.auc']:.4f} (run_id={row['run_id']})"
+            f"    {i}. {row['tags.mlflow.runName']} — AUC={row['metrics.auc']:.4f} "
+            f"(run_id={row['run_id']})"
         )
 
 

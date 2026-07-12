@@ -8,8 +8,6 @@ def run() -> None:
     df = trainer.load_processed_data()
     trainer.split_data(df)
 
-    run_ids = {}
-
     print("=== Logistic Regression ===")
     trainer.train_logistic_regression()
 

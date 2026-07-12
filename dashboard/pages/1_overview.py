@@ -11,13 +11,13 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from dashboard.components.charts import churn_distribution_pie
-from dashboard.components.metrics import (
+from dashboard.components.charts import churn_distribution_pie  # noqa: E402
+from dashboard.components.metrics import (  # noqa: E402
     display_kpi_row,
     format_number,
     format_percentage,
 )
-from src.utils.db import get_engine
+from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(page_title="Churn Overview", page_icon="🔮", layout="wide")
 

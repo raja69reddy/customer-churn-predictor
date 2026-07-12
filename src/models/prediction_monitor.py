@@ -125,7 +125,8 @@ def generate_monitoring_report(results: dict = None) -> str:
     sd = results["score_distribution"]
     lines.append(f"\n[1] Score Distribution - {'PASS' if sd['passed'] else 'FAIL'}")
     lines.append(
-        f"    n={sd['n']}  min={sd['min']:.4f}  max={sd['max']:.4f}  mean={sd['mean']:.4f}  std={sd['std']:.4f}"
+        f"    n={sd['n']}  min={sd['min']:.4f}  max={sd['max']:.4f}  "
+        f"mean={sd['mean']:.4f}  std={sd['std']:.4f}"
     )
 
     sg = results["segment_distribution"]
@@ -143,9 +144,10 @@ def generate_monitoring_report(results: dict = None) -> str:
     else:
         lines.append("    No previous snapshot - this run establishes the baseline.")
 
-    lines.append(
-        f"\nOverall: {'ALL CHECKS PASSED' if results['all_checks_passed'] else 'SOME CHECKS FAILED'}"
+    overall_status = (
+        "ALL CHECKS PASSED" if results["all_checks_passed"] else "SOME CHECKS FAILED"
     )
+    lines.append(f"\nOverall: {overall_status}")
     lines.append("=" * 55)
 
     report = "\n".join(lines)

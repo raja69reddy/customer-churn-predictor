@@ -56,7 +56,8 @@ def run() -> None:
             conn.execute(
                 text(
                     "INSERT INTO model_registry "
-                    "(model_name, model_version, accuracy, auc_score, f1_score, trained_at, is_active) "
+                    "(model_name, model_version, accuracy, auc_score, f1_score, "
+                    "trained_at, is_active) "
                     "VALUES (:name, :version, :accuracy, :auc, :f1, :trained_at, :is_active)"
                 ),
                 {

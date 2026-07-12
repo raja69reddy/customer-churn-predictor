@@ -112,7 +112,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "An internal error occurred while processing your request. Please try again later."
+            "detail": (
+                "An internal error occurred while processing your request. "
+                "Please try again later."
+            )
         },
     )
 
@@ -147,7 +150,10 @@ def _run_model(fn, *args, **kwargs):
         log.error("Model error: %s", exc)
         raise HTTPException(
             status_code=500,
-            detail="The prediction model failed to score this customer. Please verify the input and try again.",
+            detail=(
+                "The prediction model failed to score this customer. "
+                "Please verify the input and try again."
+            ),
         ) from exc
 
 
@@ -212,7 +218,8 @@ def predict_customer(customer_id: str):
 
 @app.get("/customer/{customer_id}/explanation")
 def explain_customer(customer_id: str):
-    """Returns an AI-generated (or template-fallback) explanation of an existing customer's churn risk."""
+    """Returns an AI-generated (or template-fallback) explanation of an existing
+    customer's churn risk."""
     customer = _load_customer_row(customer_id)
     customer_dict = {f: customer[f] for f in CUSTOMER_INPUT_FIELDS}
 
@@ -248,7 +255,8 @@ def risk_distribution():
     """Returns customer counts per predicted risk segment."""
     engine = get_engine()
     df = pd.read_sql(
-        "SELECT risk_segment, COUNT(*) AS customer_count FROM churn_predictions GROUP BY risk_segment",
+        "SELECT risk_segment, COUNT(*) AS customer_count "
+        "FROM churn_predictions GROUP BY risk_segment",
         engine,
     )
     return _df_to_records(df)

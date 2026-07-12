@@ -1,4 +1,5 @@
-"""API-facing predictor — wraps ChurnPredictor's feature engineering with the MLflow Production model."""
+"""API-facing predictor — wraps ChurnPredictor's feature engineering with the MLflow
+Production model."""
 
 from datetime import datetime
 

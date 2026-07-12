@@ -5,14 +5,14 @@ from datetime import datetime
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from sqlalchemy import text
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+from sqlalchemy import text  # noqa: E402
 
-from src.models.evaluate import ModelEvaluator
-from src.models.train import ModelTrainer
-from src.utils.db import get_engine
+from src.models.evaluate import ModelEvaluator  # noqa: E402
+from src.models.train import ModelTrainer  # noqa: E402
+from src.utils.db import get_engine  # noqa: E402
 
 PAIRS = [
     ("random_forest", "random_forest_tuned"),
@@ -52,7 +52,8 @@ def run() -> None:
     print("Model | Baseline AUC | Tuned AUC | Improvement")
     for _, row in comparison.iterrows():
         print(
-            f"{row['model']:<15} {row['baseline_auc']:.4f}        {row['tuned_auc']:.4f}      {row['improvement']:+.4f}"
+            f"{row['model']:<15} {row['baseline_auc']:.4f}        "
+            f"{row['tuned_auc']:.4f}      {row['improvement']:+.4f}"
         )
 
     comparison.to_csv("data/processed/tuning_comparison.csv", index=False)
@@ -76,13 +77,12 @@ def run() -> None:
 
     engine = get_engine()
     with engine.begin() as conn:
-        registry = pd.read_sql("SELECT * FROM model_registry", conn)
-
         for tuned_name, metrics in tuned_metrics.items():
             conn.execute(
                 text(
                     "INSERT INTO model_registry "
-                    "(model_name, model_version, accuracy, auc_score, f1_score, trained_at, is_active) "
+                    "(model_name, model_version, accuracy, auc_score, f1_score, "
+                    "trained_at, is_active) "
                     "VALUES (:name, :version, :accuracy, :auc, :f1, :trained_at, FALSE)"
                 ),
                 {

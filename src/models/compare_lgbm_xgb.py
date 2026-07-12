@@ -3,11 +3,11 @@
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import pandas as pd
+import matplotlib.pyplot as plt  # noqa: E402
+import pandas as pd  # noqa: E402
 
-from src.models.evaluate import ModelEvaluator
-from src.models.train import ModelTrainer
+from src.models.evaluate import ModelEvaluator  # noqa: E402
+from src.models.train import ModelTrainer  # noqa: E402
 
 
 def run() -> None:

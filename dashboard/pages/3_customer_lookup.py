@@ -12,9 +12,9 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from dashboard.components.metrics import get_risk_color
-from src.models.predict import RETENTION_ACTIONS, ChurnPredictor
-from src.utils.db import get_engine
+from dashboard.components.metrics import get_risk_color  # noqa: E402
+from src.models.predict import RETENTION_ACTIONS, ChurnPredictor  # noqa: E402
+from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(page_title="Customer Lookup", page_icon="🔮", layout="wide")
 

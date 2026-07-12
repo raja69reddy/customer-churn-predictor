@@ -7,27 +7,27 @@ import joblib
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import mlflow
-import mlflow.sklearn
-import numpy as np
-import pandas as pd
-from lightgbm import LGBMClassifier
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
+import matplotlib.pyplot as plt  # noqa: E402
+import mlflow  # noqa: E402
+import mlflow.sklearn  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+from lightgbm import LGBMClassifier  # noqa: E402
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier  # noqa: E402
+from sklearn.linear_model import LogisticRegression  # noqa: E402
+from sklearn.metrics import (  # noqa: E402
     accuracy_score,
     f1_score,
     precision_score,
     recall_score,
     roc_auc_score,
 )
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.tree import DecisionTreeClassifier
-from xgboost import XGBClassifier
+from sklearn.model_selection import GridSearchCV, train_test_split  # noqa: E402
+from sklearn.tree import DecisionTreeClassifier  # noqa: E402
+from xgboost import XGBClassifier  # noqa: E402
 
-from src.models import mlflow_setup
-from src.utils.db import get_engine
+from src.models import mlflow_setup  # noqa: E402
+from src.utils.db import get_engine  # noqa: E402
 
 TARGET_COLUMN = "churn_label"
 NON_FEATURE_COLUMNS = [

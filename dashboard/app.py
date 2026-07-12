@@ -9,7 +9,7 @@ import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.utils.db import get_engine
+from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(
     page_title="Customer Churn Predictor",

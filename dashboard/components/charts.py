@@ -3,9 +3,9 @@
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt  # noqa: E402
+import plotly.express as px  # noqa: E402
+import plotly.graph_objects as go  # noqa: E402
 
 RISK_COLOR_MAP = {"High": "#d62728", "Medium": "#ff7f0e", "Low": "#2ca02c"}
 

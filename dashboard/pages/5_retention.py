@@ -12,7 +12,7 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from dashboard.components.metrics import display_kpi_row, format_number
+from dashboard.components.metrics import display_kpi_row, format_number  # noqa: E402
 
 st.set_page_config(page_title="Retention Targeting", page_icon="🔮", layout="wide")
 

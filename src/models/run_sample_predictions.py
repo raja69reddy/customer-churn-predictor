@@ -96,7 +96,8 @@ def run() -> None:
         print("    Top 3 factors:")
         for i, factor in enumerate(factors, start=1):
             print(
-                f"        {i}. {factor['feature']} ({factor['direction']}, SHAP={factor['shap_value']:+.4f})"
+                f"        {i}. {factor['feature']} "
+                f"({factor['direction']}, SHAP={factor['shap_value']:+.4f})"
             )
         print()
 

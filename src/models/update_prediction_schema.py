@@ -51,12 +51,14 @@ def run() -> None:
         for statement in ALTER_STATEMENTS:
             conn.execute(text(statement))
     print(
-        "Added retention_priority, recommended_action, estimated_revenue_at_risk, days_since_last_score columns"
+        "Added retention_priority, recommended_action, estimated_revenue_at_risk, "
+        "days_since_last_score columns"
     )
 
     df = pd.read_sql(
         """
-        SELECT cp.customer_id, cp.churn_probability, cp.risk_segment, cp.predicted_at, rc.monthly_charges
+        SELECT cp.customer_id, cp.churn_probability, cp.risk_segment, cp.predicted_at,
+               rc.monthly_charges
         FROM churn_predictions cp
         JOIN raw_customers rc ON rc.customer_id = cp.customer_id
         """,

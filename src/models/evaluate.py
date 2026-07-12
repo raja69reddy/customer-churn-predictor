@@ -6,11 +6,11 @@ import numpy as np
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-import shap
-from sklearn.metrics import (
+import matplotlib.pyplot as plt  # noqa: E402
+import pandas as pd  # noqa: E402
+import seaborn as sns  # noqa: E402
+import shap  # noqa: E402
+from sklearn.metrics import (  # noqa: E402
     accuracy_score,
     confusion_matrix,
     f1_score,
@@ -20,7 +20,7 @@ from sklearn.metrics import (
     roc_auc_score,
     roc_curve,
 )
-from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.model_selection import StratifiedKFold, cross_validate  # noqa: E402
 
 
 class ModelEvaluator:

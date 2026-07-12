@@ -10,7 +10,7 @@ import argparse
 import logging
 import os
 import time
-from datetime import date, datetime
+from datetime import date
 
 import mlflow
 import pandas as pd
@@ -122,8 +122,10 @@ def save_to_db(engine, scored: pd.DataFrame, model_version: str, mode: str) -> i
             conn.execute(
                 text(
                     "INSERT INTO churn_predictions_history "
-                    "(customer_id, churn_probability, risk_segment, model_version, predicted_at) "
-                    "SELECT customer_id, churn_probability, risk_segment, model_version, predicted_at "
+                    "(customer_id, churn_probability, risk_segment, model_version, "
+                    "predicted_at) "
+                    "SELECT customer_id, churn_probability, risk_segment, model_version, "
+                    "predicted_at "
                     "FROM churn_predictions"
                 )
             )

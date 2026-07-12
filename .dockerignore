@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+
+.git
+venv/
+.venv/
+
+data/raw/
+mlflow/
+
+models/*.pkl
+
+notebooks/

@@ -2,6 +2,7 @@
 Production model."""
 
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
 from mlflow.tracking import MlflowClient
@@ -15,12 +16,12 @@ from src.utils.db import get_engine
 class APIPredictor:
     """Loads the MLflow Production model and scores customers for the API layer."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._churn_predictor = ChurnPredictor()
-        self.model_name = None
-        self.model_version = None
+        self.model_name: str | None = None
+        self.model_version: str | None = None
 
-    def load_model(self):
+    def load_model(self) -> Any:
         mlflow_setup.configure_tracking()
         client = MlflowClient()
         registered_name = mlflow_registry.REGISTERED_MODEL_NAME

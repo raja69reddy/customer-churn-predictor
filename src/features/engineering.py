@@ -65,10 +65,10 @@ SERVICE_COLS = [
 class FeatureEngineer:
     """Builds the processed_customers feature set from raw_customers."""
 
-    def __init__(self):
-        self.encoder = None
-        self.scaler = None
-        self.pipeline = None
+    def __init__(self) -> None:
+        self.encoder: OneHotEncoder | None = None
+        self.scaler: StandardScaler | None = None
+        self.pipeline: ColumnTransformer | None = None
 
     def load_raw_data(self) -> pd.DataFrame:
         engine = get_engine()
@@ -157,7 +157,9 @@ class FeatureEngineer:
         df["churn_label"] = (df["churn"] == "Yes").astype(int)
         return df
 
-    def apply_smote(self, X: pd.DataFrame, y: pd.Series, random_state: int = 42):
+    def apply_smote(
+        self, X: pd.DataFrame, y: pd.Series, random_state: int = 42
+    ) -> tuple[pd.DataFrame, pd.Series]:
         print("Class distribution before SMOTE:")
         print(y.value_counts())
 
@@ -192,7 +194,7 @@ class FeatureEngineer:
         )
         return self.pipeline
 
-    def fit_transform(self, df: pd.DataFrame):
+    def fit_transform(self, df: pd.DataFrame) -> np.ndarray:
         if self.pipeline is None:
             self.build_preprocessing_pipeline()
         return self.pipeline.fit_transform(df)

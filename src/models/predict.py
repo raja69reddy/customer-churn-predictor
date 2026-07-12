@@ -1,6 +1,7 @@
 """Churn prediction — scores individual customers or batches with the active best model."""
 
 import os
+from typing import Any
 
 import joblib
 import pandas as pd
@@ -41,11 +42,11 @@ FEATURE_COLUMNS = [
 class ChurnPredictor:
     """Loads the active best model and scores customers for churn risk."""
 
-    def __init__(self):
-        self.model = None
-        self.model_name = None
+    def __init__(self) -> None:
+        self.model: Any = None
+        self.model_name: str | None = None
 
-    def load_best_model(self):
+    def load_best_model(self) -> Any:
         engine = get_engine()
         registry = pd.read_sql(
             "SELECT * FROM model_registry WHERE is_active = TRUE", engine
@@ -104,7 +105,7 @@ class ChurnPredictor:
         result["risk_segment"] = [self.get_risk_segment(p) for p in probabilities]
         return result
 
-    def explain_prediction(self, customer_dict: dict, top_n: int = 3) -> list:
+    def explain_prediction(self, customer_dict: dict, top_n: int = 3) -> list[dict]:
         if self.model is None:
             self.load_best_model()
 
@@ -165,7 +166,7 @@ class ChurnPredictor:
             )
             return self._fallback_explanation(prediction, top_factors)
 
-    def _fallback_explanation(self, prediction: dict, top_factors: list) -> str:
+    def _fallback_explanation(self, prediction: dict, top_factors: list[dict]) -> str:
         names = [factor["feature"].replace("_", " ") for factor in top_factors]
         return (
             "[template fallback — OPENAI_API_KEY not configured] "

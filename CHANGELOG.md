@@ -1,5 +1,12 @@
 # Changelog
 
+## Day 12 - Docker + Deployment
+- Updated Dockerfile for production
+- Updated docker-compose.yml with 3 services
+- Created .dockerignore file
+- Added Streamlit deployment config
+- Set up GitHub Actions CI pipeline
+
 ## Day 11 — FastAPI Prediction API
 - Created api/main.py FastAPI app with CORS and middleware
 - Created api/models.py with Pydantic input/output models

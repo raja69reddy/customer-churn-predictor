@@ -119,6 +119,16 @@ uvicorn api.main:app --reload
 streamlit run dashboard/app.py
 ```
 
+## 🚀 How to Use
+1. Generate mock data: `python mock_data/gen_customers.py`
+2. Ingest data: `python -m src.data.ingestion --mode full`
+3. Engineer features: `python -m src.features.run_engineering`
+4. Train models: `python -m src.models.run_training`
+5. Score customers: `python -m src.models.batch_scorer`
+6. Launch dashboard: `streamlit run dashboard/app.py`
+7. Start API: `uvicorn api.main:app --reload`
+8. View MLflow: `mlflow ui --port 5000`
+
 ## Dashboard
 The Streamlit dashboard (dashboard/app.py) provides:
 - Overall churn rate KPIs

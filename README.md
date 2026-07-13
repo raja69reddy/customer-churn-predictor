@@ -74,6 +74,14 @@ After Day 6-7 tuning and ensembling, **XGBoost (tuned)** is the current active/P
 - **Electronic check payment method has the highest churn rate** of all payment methods — customers on autopay (bank transfer / credit card) churn noticeably less.
 - **Top 3 SHAP-driven churn features**: `charge_per_month`, `tenure_group_New Customer`, and `contract_risk_score` — together these dominate the model's feature importance (see `data/processed/rf_feature_importance.csv`) and consistently appear as the top risk factors returned by `/predict` and the dashboard's Customer Lookup page.
 
+## 🔍 Key Business Insights
+- Month-to-month contracts have 43% churn rate
+- Customers with tenure < 12 months are highest risk
+- Electronic check payment correlates with churn
+- No online security = 2x higher churn rate
+- High monthly charges + short tenure = critical risk
+- Estimated revenue at risk: **$149,129.54/month** (High + Medium risk segments combined, from `vw_risk_segments`)
+
 ## Setup Instructions
 ```bash
 # 1. Clone the repo

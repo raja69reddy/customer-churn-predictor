@@ -370,6 +370,15 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Created CONTRIBUTING.md with full development guide
 - Project is clean and well documented
 
+✅ **Day 14 — Week 2 Review + README Polish**
+- Full pipeline end-to-end test successful
+- All ingestion tests passing with pytest
+- Added ASCII schema diagram to README
+- Added data flow diagram to README
+- Added Key Business Insights section
+- Added complete How to Use section
+- Week 2 complete — moving to Phase 3 deploy and ship!
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

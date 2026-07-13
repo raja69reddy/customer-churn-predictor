@@ -1,5 +1,13 @@
 # Changelog
 
+## Day 14 - Week 2 Review + README Polish
+- Full pipeline end-to-end test successful
+- All ingestion tests passing
+- Added schema and data flow diagrams to README
+- Added Key Business Insights section
+- Added How to Use section
+- Week 2 complete!
+
 ## Day 13 - Code Quality + Documentation
 - Ran black formatter on entire codebase
 - Fixed all flake8 warnings

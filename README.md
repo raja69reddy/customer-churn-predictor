@@ -36,6 +36,26 @@ customer-churn-predictor/
 └── mlflow/            # MLflow tracking (git-ignored)
 ```
 
+## Database Schema
+```
+raw_customers (7043 rows)
+     |
+     v
+processed_customers (engineered features)
+     |
+     v
+churn_predictions (scores + segments)
+     |
+     v
+model_registry (6 models tracked)
+```
+
+## Data Flow
+```
+CSV -> ingestion.py -> PostgreSQL -> engineering.py
+    -> train.py -> MLflow -> batch_scorer.py -> Dashboard/API
+```
+
 ## Model Performance
 Baseline model comparison (`data/processed/model_comparison.csv`), evaluated on the held-out test split:
 

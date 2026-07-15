@@ -1,0 +1,5 @@
+risk_segment,customer_count,pct_of_total,avg_monthly_charges,avg_tenure,most_common_contract,total_monthly_revenue,revenue_at_risk
+High,1341.0,19.04,77.71,7.21,Month-to-month,104205.1,104205.1
+Low,4997.0,70.95,61.74,31.09,Month-to-month,308515.95,
+Medium,705.0,10.01,63.72,10.42,Month-to-month,44924.44,44924.44
+High+Medium (At Risk),2046.0,29.05,72.89,8.32,,149129.54,149129.54

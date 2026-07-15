@@ -1,0 +1,9 @@
+model_name,model_version,accuracy,auc_score,f1_score,trained_at,is_active,highlight,auc_rank
+xgboost_tuned,v2,0.8999,0.9624,0.8123,2026-07-03 14:14:44.380950,True,Best Model,1
+ensemble,v1,0.8978,0.9611,0.814,2026-07-04 22:16:23.553557,False,,2
+xgboost,v1,0.9028,0.9604,0.8161,2026-07-02 11:48:52.277205,False,,3
+logistic_regression,v1,0.895,0.9603,0.7995,2026-07-13 16:14:23.474978,False,,4
+lightgbm,v1,0.8779,0.96,0.7952,2026-07-04 22:16:23.421823,False,,5
+random_forest_tuned,v2,0.8999,0.9598,0.8107,2026-07-03 14:14:44.380285,False,,6
+decision_tree,v1,0.9013,0.9577,0.8154,2026-07-02 11:48:52.278562,False,,7
+random_forest,v1,0.8744,0.9338,0.7611,2026-07-13 16:14:23.475446,False,,8

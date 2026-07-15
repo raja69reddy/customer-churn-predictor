@@ -1,0 +1,25 @@
+dimension,segment,total_customers,churned,churn_rate_pct,avg_tenure_months,avg_monthly_charges
+overall,all,7043,1831,26.0,24.47,64.98
+contract,One year,1479,0,0.0,29.19,65.34
+contract,Month-to-month,3857,1831,47.47,12.36,64.87
+contract,Two year,1707,0,0.0,47.76,64.91
+gender,Female,3476,912,26.24,24.5,65.19
+gender,Male,3567,919,25.76,24.44,64.78
+senior_citizen,Non-Senior,5960,1557,26.12,24.35,64.79
+senior_citizen,Senior,1083,274,25.3,25.16,66.0
+tenure_group,48+,827,0,0.0,60.17,64.52
+tenure_group,0-12,2007,1479,73.69,6.61,65.19
+tenure_group,24-48,1772,0,0.0,36.3,65.18
+tenure_group,12-24,2437,352,14.44,18.46,64.82
+monthly_charge_tier,low,1545,175,11.33,24.72,23.25
+monthly_charge_tier,high,3569,1212,33.96,24.53,86.12
+monthly_charge_tier,medium,1929,444,23.02,24.16,59.29
+services_count,4,1715,498,29.04,24.78,76.95
+services_count,6,415,97,23.37,25.49,89.89
+services_count,2,555,190,34.23,25.41,63.61
+services_count,3,1458,495,33.95,23.59,70.65
+services_count,0,161,22,13.66,23.57,20.26
+services_count,5,1210,334,27.6,24.15,84.55
+services_count,7,74,16,21.62,23.36,99.1
+services_count,1,1447,178,12.3,24.76,25.13
+services_count,8,8,1,12.5,24.75,98.07

@@ -1,5 +1,12 @@
 # Changelog
 
+## Day 15 - Streamlit Cloud Deployment
+- Created requirements_streamlit.txt
+- Updated .streamlit/config.toml theme
+- Created dashboard/demo_mode.py
+- Updated app.py with demo mode fallback
+- Generated demo data files for cloud
+
 ## Day 14 - Week 2 Review + README Polish
 - Full pipeline end-to-end test successful
 - All ingestion tests passing

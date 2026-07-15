@@ -9,6 +9,7 @@ import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from dashboard import demo_mode  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(
@@ -74,8 +75,37 @@ def render_cache_controls() -> None:
     )
 
 
+def render_mode_badge() -> None:
+    if demo_mode.is_demo_mode():
+        st.warning(
+            "🟡 **Demo Mode** — showing sample data (no live database connection)."
+        )
+    else:
+        st.success("🟢 **Live Mode** — connected to the database.")
+
+
+def _demo_project_stats() -> dict:
+    predictions = demo_mode.get_demo_predictions()
+    total_scored = len(predictions)
+    high_risk_count = int((predictions["risk_segment"] == "High").sum())
+    churn_rate = (predictions["churn"] == "Yes").mean() * 100
+
+    metrics = demo_mode.get_demo_model_metrics()
+    model_auc = float(metrics["auc_score"].max()) if not metrics.empty else None
+
+    return {
+        "total_scored": total_scored,
+        "churn_rate": churn_rate,
+        "high_risk_count": high_risk_count,
+        "model_auc": model_auc,
+    }
+
+
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_project_stats() -> dict:
+    if demo_mode.is_demo_mode():
+        return _demo_project_stats()
+
     engine = get_engine()
 
     predictions = pd.read_sql(
@@ -101,6 +131,8 @@ def load_project_stats() -> dict:
 
 
 def main() -> None:
+    render_mode_badge()
+
     filters = render_sidebar_filters()
     st.session_state["filters"] = filters
 

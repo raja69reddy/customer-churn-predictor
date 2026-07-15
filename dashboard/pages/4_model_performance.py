@@ -1,31 +1,43 @@
-"""Model Performance page — leaderboard, ROC curves, feature importance, SHAP, confusion matrix."""
+"""Model Performance page — leaderboard, ROC curves, feature importance, SHAP, confusion matrix.
+
+The ROC/SHAP/confusion-matrix sections need live trained models plus sklearn/matplotlib/shap,
+none of which are in the lightweight requirements_streamlit.txt used for cloud deploys — those
+sections are skipped (with an explanatory message) whenever demo mode is active or those
+packages simply aren't installed.
+"""
 
 import os
 import sys
 from datetime import datetime
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import pandas as pd  # noqa: E402
-import plotly.express as px  # noqa: E402
-import plotly.graph_objects as go  # noqa: E402
-import streamlit as st  # noqa: E402
-from sklearn.metrics import roc_auc_score, roc_curve  # noqa: E402
+import pandas as pd
+import plotly.express as px
+import streamlit as st
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from dashboard.components.charts import (  # noqa: E402
-    feature_importance_bar,
-    shap_summary_plot,
-)
+from dashboard import demo_mode  # noqa: E402
+from dashboard.components.charts import feature_importance_bar  # noqa: E402
 from dashboard.components.metrics import display_kpi_row, format_number  # noqa: E402
-from src.models.evaluate import ModelEvaluator  # noqa: E402
-from src.models.train import ModelTrainer  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
+
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import plotly.graph_objects as go
+    from sklearn.metrics import roc_auc_score, roc_curve
+
+    from dashboard.components.charts import shap_summary_plot
+    from src.models.evaluate import ModelEvaluator
+    from src.models.train import ModelTrainer
+
+    LIVE_MODEL_LIBS_AVAILABLE = True
+except ImportError:
+    LIVE_MODEL_LIBS_AVAILABLE = False
 
 st.set_page_config(page_title="Model Performance", page_icon="🔮", layout="wide")
 
@@ -57,11 +69,21 @@ def render_cache_controls() -> None:
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_model_performance() -> pd.DataFrame:
+    if demo_mode.is_demo_mode():
+        return demo_mode.get_demo_model_metrics()
     engine = get_engine()
     return pd.read_sql("SELECT * FROM vw_model_performance", engine)
 
 
 def main() -> None:
+    is_demo = demo_mode.is_demo_mode()
+    if is_demo:
+        st.warning(
+            "🟡 **Demo Mode** — showing sample data (no live database connection)."
+        )
+    else:
+        st.success("🟢 **Live Mode** — connected to the database.")
+
     render_cache_controls()
 
     st.title("Model Performance")
@@ -120,6 +142,16 @@ def main() -> None:
 
     st.divider()
     st.subheader("ROC Curves — All Models")
+
+    if is_demo or not LIVE_MODEL_LIBS_AVAILABLE:
+        st.info(
+            "ℹ️ ROC curves, live feature importance, confusion matrix, and SHAP analysis "
+            "require trained model files and ML libraries (scikit-learn, matplotlib, shap) "
+            "that aren't available in demo mode / the lightweight cloud deployment. "
+            "Run this dashboard locally with the full `requirements.txt` and a populated "
+            "database to see these sections."
+        )
+        return
 
     try:
         with st.spinner("Loading model performance..."):

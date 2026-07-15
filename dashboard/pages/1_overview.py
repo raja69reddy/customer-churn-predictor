@@ -11,6 +11,7 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
+from dashboard import demo_mode  # noqa: E402
 from dashboard.components.charts import churn_distribution_pie  # noqa: E402
 from dashboard.components.metrics import (  # noqa: E402
     display_kpi_row,
@@ -60,8 +61,34 @@ def render_sidebar_filters() -> dict:
     }
 
 
+def _filter_demo_customers(filters: dict) -> pd.DataFrame:
+    df = demo_mode.get_demo_predictions()
+    df = df[
+        (df["tenure"] >= filters["tenure_range"][0])
+        & (df["tenure"] <= filters["tenure_range"][1])
+    ]
+    if filters["risk_segment"] != "All":
+        df = df[df["risk_segment"] == filters["risk_segment"]]
+    if filters["contract"] != "All":
+        df = df[df["contract"] == filters["contract"]]
+    return df[
+        [
+            "customer_id",
+            "churn",
+            "contract",
+            "tenure",
+            "monthly_charges",
+            "risk_segment",
+            "churn_probability",
+        ]
+    ]
+
+
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_filtered_customers(filters: dict) -> pd.DataFrame:
+    if demo_mode.is_demo_mode():
+        return _filter_demo_customers(filters)
+
     engine = get_engine()
     query = """
         SELECT rc.customer_id, rc.churn, rc.contract, rc.tenure, rc.monthly_charges,
@@ -87,12 +114,21 @@ def load_filtered_customers(filters: dict) -> pd.DataFrame:
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_churn_overview() -> pd.DataFrame:
+    if demo_mode.is_demo_mode():
+        return demo_mode.get_demo_churn_overview()
     engine = get_engine()
     return pd.read_sql("SELECT * FROM vw_churn_overview", engine)
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_model_accuracy() -> float:
+    if demo_mode.is_demo_mode():
+        metrics = demo_mode.get_demo_model_metrics()
+        return (
+            float(metrics.loc[metrics["auc_score"].idxmax(), "accuracy"])
+            if not metrics.empty
+            else None
+        )
     engine = get_engine()
     result = pd.read_sql(
         "SELECT accuracy FROM model_registry WHERE is_active = TRUE LIMIT 1", engine
@@ -101,6 +137,13 @@ def load_model_accuracy() -> float:
 
 
 def main() -> None:
+    if demo_mode.is_demo_mode():
+        st.warning(
+            "🟡 **Demo Mode** — showing sample data (no live database connection)."
+        )
+    else:
+        st.success("🟢 **Live Mode** — connected to the database.")
+
     st.title("Churn Overview")
 
     filters = render_sidebar_filters()

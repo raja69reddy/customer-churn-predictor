@@ -12,9 +12,32 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
+from dashboard import demo_mode  # noqa: E402
 from dashboard.components.metrics import get_risk_color  # noqa: E402
-from src.models.predict import RETENTION_ACTIONS, ChurnPredictor  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
+
+try:
+    from src.models.predict import RETENTION_ACTIONS, ChurnPredictor
+except ImportError:
+    # Heavy ML deps (xgboost/shap/openai/...) aren't in requirements_streamlit.txt —
+    # demo mode never needs a live ChurnPredictor, so fall back to a static copy of
+    # RETENTION_ACTIONS and treat the live-scoring path as unavailable.
+    ChurnPredictor = None
+    RETENTION_ACTIONS = {
+        "High": [
+            "Offer a loyalty discount or incentive to switch to a longer-term contract",
+            "Assign a customer success rep for proactive outreach this week",
+            "Offer a free service add-on (e.g. online security) to increase switching cost",
+        ],
+        "Medium": [
+            "Send a satisfaction survey to identify pain points",
+            "Highlight underused services or bundle benefits",
+            "Offer a modest loyalty discount tied to contract renewal",
+        ],
+        "Low": [
+            "No immediate action needed — monitor at the next billing cycle",
+        ],
+    }
 
 st.set_page_config(page_title="Customer Lookup", page_icon="🔮", layout="wide")
 
@@ -38,12 +61,43 @@ def render_cache_controls() -> None:
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_customer(customer_id: str) -> pd.DataFrame:
+    if demo_mode.is_demo_mode():
+        demo = demo_mode.get_demo_predictions()
+        return demo[demo["customer_id"] == customer_id]
+
     engine = get_engine()
     return pd.read_sql(
         "SELECT * FROM raw_customers WHERE customer_id = %(cid)s",
         engine,
         params={"cid": customer_id},
     )
+
+
+def _demo_prediction_result(row: pd.Series) -> tuple[dict, list, str]:
+    """Builds a (result, factors, explanation) tuple from a precomputed demo row,
+    mirroring ChurnPredictor.predict_single / explain_prediction / explain_with_gpt."""
+    result = {
+        "churn_probability": float(row["churn_probability"]),
+        "risk_segment": row["risk_segment"],
+    }
+    factors = [
+        {
+            "feature": row[f"factor_{i}"],
+            "shap_value": float(row[f"factor_{i}_shap"]),
+            "direction": (
+                "increases risk" if row[f"factor_{i}_shap"] > 0 else "decreases risk"
+            ),
+        }
+        for i in (1, 2, 3)
+    ]
+    names = [f["feature"].replace("_", " ") for f in factors]
+    explanation = (
+        "[demo mode — precomputed sample explanation] "
+        f"This customer has a {result['risk_segment'].lower()} churn risk "
+        f"({result['churn_probability']:.0%} probability), driven mainly by {names[0]}, "
+        f"{names[1]}, and {names[2]}."
+    )
+    return result, factors, explanation
 
 
 def probability_gauge(probability: float, color: str):
@@ -94,11 +148,20 @@ def render_profile_card(customer: pd.Series) -> None:
 
 
 def main() -> None:
+    is_demo = demo_mode.is_demo_mode()
+    if is_demo:
+        st.warning(
+            "🟡 **Demo Mode** — showing sample data (no live database connection)."
+        )
+    else:
+        st.success("🟢 **Live Mode** — connected to the database.")
+
     render_cache_controls()
 
     st.title("Customer Lookup")
 
-    customer_id = st.text_input("Customer ID", placeholder="e.g. CUST-00001")
+    placeholder = "e.g. CUST-DEMO-001" if is_demo else "e.g. CUST-00001"
+    customer_id = st.text_input("Customer ID", placeholder=placeholder)
     predict_clicked = st.button("Predict Churn", type="primary")
 
     if not predict_clicked:
@@ -125,18 +188,22 @@ def main() -> None:
 
     st.divider()
 
-    try:
-        with st.spinner("Running prediction..."):
-            predictor = ChurnPredictor()
-            predictor.load_best_model()
+    if is_demo or ChurnPredictor is None:
+        with st.spinner("Loading prediction..."):
+            result, factors, explanation = _demo_prediction_result(customer)
+    else:
+        try:
+            with st.spinner("Running prediction..."):
+                predictor = ChurnPredictor()
+                predictor.load_best_model()
 
-            customer_dict = customer.to_dict()
-            result = predictor.predict_single(customer_dict)
-            factors = predictor.explain_prediction(customer_dict, top_n=5)
-            explanation = predictor.explain_with_gpt(customer_dict, result)
-    except Exception as e:
-        st.error(f"⚠️ Could not generate a prediction for this customer: {e}")
-        return
+                customer_dict = customer.to_dict()
+                result = predictor.predict_single(customer_dict)
+                factors = predictor.explain_prediction(customer_dict, top_n=5)
+                explanation = predictor.explain_with_gpt(customer_dict, result)
+        except Exception as e:
+            st.error(f"⚠️ Could not generate a prediction for this customer: {e}")
+            return
 
     color = get_risk_color(result["risk_segment"])
 
@@ -154,7 +221,7 @@ def main() -> None:
         )
         st.markdown(f"**Churn Probability:** {result['churn_probability']:.1%}")
 
-        st.markdown("#### Top 5 Risk Factors")
+        st.markdown(f"#### Top {len(factors)} Risk Factors")
         for i, factor in enumerate(factors, start=1):
             st.markdown(
                 f"{i}. **{factor['feature'].replace('_', ' ')}** — {factor['direction']} "

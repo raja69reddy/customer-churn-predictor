@@ -1,11 +1,13 @@
-"""Reusable chart-building functions for the Streamlit dashboard (mostly Plotly figures)."""
+"""Reusable chart-building functions for the Streamlit dashboard (mostly Plotly figures).
 
-import matplotlib
+matplotlib/shap are intentionally imported lazily inside shap_summary_plot() only —
+every other function here is pure Plotly so pages that don't need SHAP (which is most
+of them) don't require matplotlib/shap to be installed. This matters for the lightweight
+Streamlit Community Cloud deploy (requirements_streamlit.txt has neither package).
+"""
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import plotly.express as px  # noqa: E402
-import plotly.graph_objects as go  # noqa: E402
+import plotly.express as px
+import plotly.graph_objects as go
 
 RISK_COLOR_MAP = {"High": "#d62728", "Medium": "#ff7f0e", "Low": "#2ca02c"}
 
@@ -117,6 +119,10 @@ def roc_curve_plot(fpr, tpr, auc: float, model_name: str = "Model"):
 def shap_summary_plot(shap_values, features):
     """SHAP beeswarm summary plot. Returns a matplotlib figure (SHAP has no native Plotly API) —
     display it in Streamlit with st.pyplot(fig)."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
     import shap
 
     fig = plt.figure()

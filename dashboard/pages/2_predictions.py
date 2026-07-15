@@ -11,6 +11,7 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
+from dashboard import demo_mode  # noqa: E402
 from dashboard.components.charts import (  # noqa: E402
     probability_histogram,
     risk_segment_bar,
@@ -63,8 +64,24 @@ def render_sidebar_filters() -> dict:
     }
 
 
+def _filter_demo_predictions(filters: dict) -> pd.DataFrame:
+    df = demo_mode.get_demo_predictions()
+    df = df[
+        (df["tenure"] >= filters["tenure_range"][0])
+        & (df["tenure"] <= filters["tenure_range"][1])
+    ]
+    if filters["risk_segment"] != "All":
+        df = df[df["risk_segment"] == filters["risk_segment"]]
+    if filters["contract"] != "All":
+        df = df[df["contract"] == filters["contract"]]
+    return df
+
+
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
 def load_predictions(filters: dict) -> pd.DataFrame:
+    if demo_mode.is_demo_mode():
+        return _filter_demo_predictions(filters)
+
     engine = get_engine()
     query = (
         "SELECT * FROM vw_churn_predictions "
@@ -86,6 +103,13 @@ def load_predictions(filters: dict) -> pd.DataFrame:
 
 
 def main() -> None:
+    if demo_mode.is_demo_mode():
+        st.warning(
+            "🟡 **Demo Mode** — showing sample data (no live database connection)."
+        )
+    else:
+        st.success("🟢 **Live Mode** — connected to the database.")
+
     st.title("Churn Predictions")
 
     filters = render_sidebar_filters()

@@ -379,6 +379,14 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Added complete How to Use section
 - Week 2 complete — moving to Phase 3 deploy and ship!
 
+✅ **Day 15 — Streamlit Cloud Deployment Setup**
+- Created requirements_streamlit.txt for lightweight cloud deploy
+- Updated .streamlit/config.toml with full theme config
+- Created dashboard/demo_mode.py for DB-free operation
+- Updated app.py — auto falls back to demo mode if no DB
+- Generated demo data files committed to GitHub
+- Dashboard ready for Streamlit Community Cloud deployment
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 17 - Portfolio Polish
+- Added tech stack badges to README
+- Added project highlights section
+- Added Future Work section
+- Added MIT LICENSE file
+
 ## Day 16 - Dashboard Polish
 - Polished all 5 dashboard pages
 - Added trend charts and gauge charts

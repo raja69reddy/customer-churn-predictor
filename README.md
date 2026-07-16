@@ -414,6 +414,13 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Added revenue at risk chart to retention page
 - All 5 dashboard pages polished and production ready
 
+✅ **Day 17 — Portfolio Polish**
+- Added tech stack badges to README
+- Added project highlights with key achievements
+- Added Future Work section with 6 planned features
+- Added MIT LICENSE file
+- Project README is now recruiter ready!
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

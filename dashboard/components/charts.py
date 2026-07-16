@@ -116,6 +116,29 @@ def roc_curve_plot(fpr, tpr, auc: float, model_name: str = "Model"):
     return fig
 
 
+def probability_gauge(probability: float, color: str, title: str = "Churn Probability"):
+    """Gauge chart for a single customer's churn probability."""
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=probability * 100,
+            number={"suffix": "%"},
+            title={"text": title},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": color},
+                "steps": [
+                    {"range": [0, 40], "color": "#e6f4ea"},
+                    {"range": [40, 70], "color": "#fdf0e0"},
+                    {"range": [70, 100], "color": "#fbe4e2"},
+                ],
+            },
+        )
+    )
+    fig.update_layout(height=300, margin=dict(l=20, r=20, t=50, b=20))
+    return fig
+
+
 def shap_summary_plot(shap_values, features):
     """SHAP beeswarm summary plot. Returns a matplotlib figure (SHAP has no native Plotly API) —
     display it in Streamlit with st.pyplot(fig)."""

@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 sys.path.insert(
@@ -13,6 +14,8 @@ sys.path.insert(
 
 from dashboard import demo_mode  # noqa: E402
 from dashboard.components.charts import (  # noqa: E402
+    RISK_COLOR_MAP,
+    probability_gauge,
     probability_histogram,
     risk_segment_bar,
 )
@@ -20,6 +23,7 @@ from dashboard.components.metrics import (  # noqa: E402
     display_kpi_row,
     format_number,
     format_percentage,
+    get_risk_color,
 )
 from src.utils.db import get_engine  # noqa: E402
 
@@ -102,6 +106,72 @@ def load_predictions(filters: dict) -> pd.DataFrame:
     return pd.read_sql(query, engine, params=params)
 
 
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
+def load_risk_segment_trend() -> pd.DataFrame:
+    """Returns risk segment counts per day (long format: date, risk_segment, count).
+
+    Live mode aggregates the real churn_predictions_history archive by day (see Day 9).
+    Demo mode has no real history, so it generates an illustrative 14-day trend around
+    the current demo segment counts.
+    """
+    if demo_mode.is_demo_mode():
+        demo = demo_mode.get_demo_predictions()
+        base_counts = demo["risk_segment"].value_counts().to_dict()
+        dates = pd.date_range(
+            end=pd.Timestamp.today().normalize(), periods=14, freq="D"
+        )
+        rows = []
+        for i, d in enumerate(dates):
+            wobble = ((i * 37) % 11 - 5) / 20
+            for segment in ["High", "Medium", "Low"]:
+                base = base_counts.get(segment, 0)
+                rows.append(
+                    {
+                        "date": d,
+                        "risk_segment": segment,
+                        "count": max(0, round(base * (1 + wobble))),
+                    }
+                )
+        return pd.DataFrame(rows)
+
+    engine = get_engine()
+    query = """
+        WITH daily_latest AS (
+            SELECT DISTINCT ON (customer_id, archived_at::date)
+                customer_id, archived_at::date AS d, risk_segment
+            FROM churn_predictions_history
+            ORDER BY customer_id, archived_at::date, archived_at DESC
+        )
+        SELECT d AS date, risk_segment, COUNT(*) AS count
+        FROM daily_latest
+        GROUP BY d, risk_segment
+        ORDER BY d, risk_segment
+    """
+    return pd.read_sql(query, engine)
+
+
+def _probability_shade(value: float) -> str:
+    """Linear white->red interpolation, avoiding a matplotlib dependency for
+    Styler.background_gradient (not available in the lightweight cloud deploy)."""
+    value = max(0.0, min(1.0, value))
+    start, end = (255, 245, 240), (165, 15, 21)  # light red -> dark red
+    r, g, b = (int(start[i] + (end[i] - start[i]) * value) for i in range(3))
+    text_color = "white" if value > 0.55 else "black"
+    return f"background-color: rgb({r},{g},{b}); color: {text_color};"
+
+
+def _style_high_risk_table(df: pd.DataFrame):
+    def _segment_style(val):
+        color = RISK_COLOR_MAP.get(val, "#7f7f7f")
+        return f"background-color: {color}; color: white; font-weight: 600; text-align: center;"
+
+    return (
+        df.style.map(_segment_style, subset=["segment"])
+        .map(lambda v: _probability_shade(v), subset=["probability"])
+        .format({"probability": "{:.1%}", "monthly_charges": "${:.2f}"})
+    )
+
+
 def main() -> None:
     if demo_mode.is_demo_mode():
         st.warning(
@@ -165,6 +235,61 @@ def main() -> None:
         st.plotly_chart(probability_histogram(predictions), use_container_width=True)
 
     st.divider()
+    st.subheader("Top Risk Customer")
+    top_risk = predictions.sort_values("churn_probability", ascending=False).iloc[0]
+    gcol1, gcol2 = st.columns([1, 1])
+    with gcol1:
+        st.plotly_chart(
+            probability_gauge(
+                top_risk["churn_probability"],
+                get_risk_color(top_risk["risk_segment"]),
+                title=f"{top_risk['customer_id']}",
+            ),
+            use_container_width=True,
+        )
+    with gcol2:
+        st.markdown(f"**Customer ID:** {top_risk['customer_id']}")
+        st.markdown(f"**Risk Segment:** {top_risk['risk_segment']}")
+        st.markdown(f"**Contract:** {top_risk['contract']}")
+        st.markdown(f"**Tenure:** {top_risk['tenure']} months")
+        st.markdown(f"**Monthly Charges:** ${top_risk['monthly_charges']:.2f}")
+
+    st.divider()
+    st.subheader("Trends & Distributions")
+    trend = load_risk_segment_trend()
+    tcol1, tcol2 = st.columns(2)
+    with tcol1:
+        if not trend.empty:
+            trend_fig = px.area(
+                trend,
+                x="date",
+                y="count",
+                color="risk_segment",
+                color_discrete_map=RISK_COLOR_MAP,
+                category_orders={"risk_segment": ["Low", "Medium", "High"]},
+                title="Risk Segment Trend Over Time",
+            )
+            trend_fig.update_layout(xaxis_title="Date", yaxis_title="Customer Count")
+            st.plotly_chart(trend_fig, use_container_width=True)
+        else:
+            st.info("No historical scoring runs available yet to build a trend.")
+    with tcol2:
+        box_fig = px.box(
+            predictions,
+            x="contract",
+            y="churn_probability",
+            color="contract",
+            title="Churn Probability Distribution by Contract Type",
+            points="outliers",
+        )
+        box_fig.update_layout(
+            xaxis_title="Contract Type",
+            yaxis_title="Churn Probability",
+            showlegend=False,
+        )
+        st.plotly_chart(box_fig, use_container_width=True)
+
+    st.divider()
     st.subheader("High Risk Customers")
 
     search_id = st.text_input("Search by Customer ID")
@@ -187,7 +312,12 @@ def main() -> None:
             high_risk["customer_id"].str.contains(search_id, case=False, na=False)
         ]
 
-    st.dataframe(high_risk, use_container_width=True, hide_index=True)
+    if high_risk.empty:
+        st.info("No high risk customers match the current search/filters.")
+    else:
+        st.dataframe(
+            _style_high_risk_table(high_risk), use_container_width=True, hide_index=True
+        )
 
     csv_bytes = predictions.to_csv(index=False).encode("utf-8")
     st.download_button(

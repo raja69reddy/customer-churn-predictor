@@ -1,5 +1,14 @@
 # Customer Churn Predictor
 
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)
+![Scikit-Learn](https://img.shields.io/badge/ScikitLearn-1.3-orange)
+![XGBoost](https://img.shields.io/badge/XGBoost-2.0-green)
+![MLflow](https://img.shields.io/badge/MLflow-2.0-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.28-red)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
 ## Project Overview
 An end-to-end machine learning system that predicts customer churn using the Telco Customer Churn dataset. The project covers the full ML lifecycle: data ingestion, feature engineering, model training, evaluation, serving via a REST API, and an interactive dashboard — with GPT-powered natural-language explanations for each at-risk customer.
 

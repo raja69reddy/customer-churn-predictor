@@ -414,9 +414,10 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Added revenue at risk chart to retention page
 - All 5 dashboard pages polished and production ready
 
-## Future Work
-- Add real-time streaming predictions (Kafka / Redis)
-- Scheduled retraining pipeline (Airflow / cron)
-- Slack / email alerts for high-risk customers
-- A/B testing framework for model versions
-- React frontend to replace Streamlit for production use
+## 🔮 Future Work
+- Real-time streaming predictions with Kafka
+- A/B testing framework for retention campaigns
+- Email notification system for high risk alerts
+- Integration with CRM systems (Salesforce)
+- Deep learning model (Neural Network) comparison
+- Automated retraining pipeline with Airflow

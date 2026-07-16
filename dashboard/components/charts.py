@@ -67,7 +67,7 @@ def probability_histogram(df):
 
 
 def feature_importance_bar(df, top_n: int = 15):
-    """Horizontal bar chart of the top-N most important features.
+    """Horizontal bar chart of the top-N most important features, color-graded by importance.
 
     Expects columns 'feature' and 'importance' (rf_feature_importance.csv format).
     """
@@ -83,8 +83,10 @@ def feature_importance_bar(df, top_n: int = 15):
         y="feature",
         orientation="h",
         title=f"Top {top_n} Feature Importances",
-        color_discrete_sequence=["#1f77b4"],
+        color="importance",
+        color_continuous_scale="Blues",
     )
+    fig.update_layout(coloraxis_showscale=False)
     return fig
 
 

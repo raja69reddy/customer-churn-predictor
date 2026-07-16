@@ -49,6 +49,12 @@ MODEL_NAMES = [
     "lightgbm",
     "ensemble",
 ]
+TREE_BASED_MODELS = {
+    "decision_tree",
+    "random_forest_tuned",
+    "xgboost_tuned",
+    "lightgbm",
+}
 CACHE_TTL_SECONDS = 300
 
 
@@ -73,6 +79,25 @@ def load_model_performance() -> pd.DataFrame:
         return demo_mode.get_demo_model_metrics()
     engine = get_engine()
     return pd.read_sql("SELECT * FROM vw_model_performance", engine)
+
+
+def render_model_detail(row: pd.Series) -> None:
+    with st.container(border=True):
+        st.markdown(f"#### {row['model_name']}")
+        dcol1, dcol2, dcol3, dcol4 = st.columns(4)
+        dcol1.metric("Accuracy", f"{row['accuracy']:.4f}")
+        dcol2.metric("AUC Score", f"{row['auc_score']:.4f}")
+        dcol3.metric("F1 Score", f"{row['f1_score']:.4f}")
+        dcol4.metric("Active in Production", "Yes" if row.get("is_active") else "No")
+
+        version = row.get("model_version", "n/a")
+        trained_at = row.get("trained_at")
+        trained_at_str = (
+            trained_at.strftime("%Y-%m-%d %H:%M:%S")
+            if hasattr(trained_at, "strftime")
+            else str(trained_at)
+        )
+        st.caption(f"Version: `{version}`  |  Trained at: {trained_at_str}")
 
 
 def main() -> None:
@@ -136,9 +161,35 @@ def main() -> None:
         y="model_name",
         orientation="h",
         title="Model Comparison — AUC Score",
-        color_discrete_sequence=["#1f77b4"],
+        color="auc_score",
+        color_continuous_scale="Blues",
+        text="auc_score",
+    )
+    fig.update_traces(texttemplate="%{text:.4f}", textposition="outside")
+    fig.update_layout(
+        xaxis_title="AUC Score", yaxis_title="Model", coloraxis_showscale=False
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    # model_registry can accumulate duplicate model_name rows across training reruns
+    # (see Day 14 notes) — keep only each model's best-AUC row for the selector/detail view.
+    performance_by_model = (
+        performance.sort_values("auc_score", ascending=False)
+        .drop_duplicates(subset="model_name", keep="first")
+        .reset_index(drop=True)
+    )
+
+    st.divider()
+    st.subheader("Model Details")
+    model_options = performance_by_model["model_name"].tolist()
+    default_index = model_options.index(best_row["model_name"])
+    selected_model_name = st.selectbox(
+        "Select a model to inspect", model_options, index=default_index
+    )
+    selected_row = performance_by_model[
+        performance_by_model["model_name"] == selected_model_name
+    ].iloc[0]
+    render_model_detail(selected_row)
 
     st.divider()
     st.subheader("ROC Curves — All Models")
@@ -159,15 +210,25 @@ def main() -> None:
             df = trainer.load_processed_data()
             trainer.split_data(df)
 
+            palette = px.colors.qualitative.Set2
             roc_fig = go.Figure()
-            for name in MODEL_NAMES:
+            for i, name in enumerate(MODEL_NAMES):
                 model = trainer.load_model(name)
                 y_proba = model.predict_proba(trainer.X_test)[:, 1]
                 fpr, tpr, _ = roc_curve(trainer.y_test, y_proba)
                 auc = roc_auc_score(trainer.y_test, y_proba)
+                is_selected = name == selected_model_name
                 roc_fig.add_trace(
                     go.Scatter(
-                        x=fpr, y=tpr, mode="lines", name=f"{name} (AUC={auc:.3f})"
+                        x=fpr,
+                        y=tpr,
+                        mode="lines",
+                        name=f"{name} (AUC={auc:.3f})",
+                        line=dict(
+                            color=palette[i % len(palette)],
+                            width=4 if is_selected else 1.5,
+                        ),
+                        opacity=1.0 if is_selected else 0.6,
                     )
                 )
             roc_fig.add_trace(
@@ -180,7 +241,13 @@ def main() -> None:
                 )
             )
             roc_fig.update_layout(
-                xaxis_title="False Positive Rate", yaxis_title="True Positive Rate"
+                title=f"ROC Curves ({selected_model_name} highlighted)",
+                xaxis_title="False Positive Rate",
+                yaxis_title="True Positive Rate",
+                plot_bgcolor="white",
+                xaxis=dict(gridcolor="#eee", zeroline=False),
+                yaxis=dict(gridcolor="#eee", zeroline=False),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.3),
             )
         st.plotly_chart(roc_fig, use_container_width=True)
 
@@ -195,31 +262,38 @@ def main() -> None:
             )
 
         with col2:
-            st.subheader(f"Confusion Matrix — {best_row['model_name']}")
-            best_model = trainer.load_model(best_row["model_name"])
+            st.subheader(f"Confusion Matrix — {selected_model_name}")
+            selected_model = trainer.load_model(selected_model_name)
             evaluator = ModelEvaluator()
             fig_cm, ax = plt.subplots(figsize=(5, 4))
             evaluator.plot_confusion_matrix(
-                best_model,
+                selected_model,
                 trainer.X_test,
                 trainer.y_test,
-                best_row["model_name"],
+                selected_model_name,
                 ax=ax,
             )
             st.pyplot(fig_cm)
 
         st.divider()
-        st.subheader(f"SHAP Summary — {best_row['model_name']}")
-        with st.spinner("Loading model performance..."):
-            import shap
-
-            X_test_float = trainer.X_test.astype(float)
-            explainer = shap.TreeExplainer(
-                best_model, feature_perturbation="tree_path_dependent"
+        st.subheader(f"SHAP Summary — {selected_model_name}")
+        if selected_model_name not in TREE_BASED_MODELS:
+            st.info(
+                f"ℹ️ SHAP TreeExplainer analysis isn't available for '{selected_model_name}' "
+                "— it only supports tree-based models. Select a tree-based model "
+                f"({', '.join(sorted(TREE_BASED_MODELS))}) to see its SHAP summary."
             )
-            shap_values = explainer(X_test_float)
-            shap_fig = shap_summary_plot(shap_values, X_test_float)
-        st.pyplot(shap_fig)
+        else:
+            with st.spinner("Loading model performance..."):
+                import shap
+
+                X_test_float = trainer.X_test.astype(float)
+                explainer = shap.TreeExplainer(
+                    selected_model, feature_perturbation="tree_path_dependent"
+                )
+                shap_values = explainer(X_test_float)
+                shap_fig = shap_summary_plot(shap_values, X_test_float)
+            st.pyplot(shap_fig)
     except FileNotFoundError as e:
         st.warning(
             f"No data available — a required model or feature-importance file is missing: {e}"

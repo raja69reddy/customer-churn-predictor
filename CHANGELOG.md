@@ -1,5 +1,12 @@
 # Changelog
 
+## Day 16 - Dashboard Polish
+- Polished all 5 dashboard pages
+- Added trend charts and gauge charts
+- Improved color coding and badges
+- Added download buttons to all pages
+- Added campaign ROI estimator
+
 ## Day 15 - Streamlit Cloud Deployment
 - Created requirements_streamlit.txt
 - Updated .streamlit/config.toml theme

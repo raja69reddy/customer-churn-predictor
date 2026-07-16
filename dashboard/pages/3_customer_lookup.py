@@ -2,10 +2,10 @@
 
 import os
 import sys
+import time
 from datetime import datetime
 
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 sys.path.insert(
@@ -13,6 +13,7 @@ sys.path.insert(
 )
 
 from dashboard import demo_mode  # noqa: E402
+from dashboard.components.charts import probability_gauge  # noqa: E402
 from dashboard.components.metrics import get_risk_color  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
 
@@ -42,6 +43,8 @@ except ImportError:
 st.set_page_config(page_title="Customer Lookup", page_icon="🔮", layout="wide")
 
 CACHE_TTL_SECONDS = 300
+
+ACTION_ICONS = ["🎯", "📞", "🎁", "📋", "💬", "⭐"]
 
 
 def render_cache_controls() -> None:
@@ -73,6 +76,45 @@ def load_customer(customer_id: str) -> pd.DataFrame:
     )
 
 
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
+def load_similar_high_risk(
+    customer_id: str, contract: str, tenure: int, limit: int = 5
+) -> pd.DataFrame:
+    """Returns other High-risk customers with the same contract type, ranked by tenure proximity."""
+    if demo_mode.is_demo_mode():
+        demo = demo_mode.get_demo_predictions()
+        pool = demo[
+            (demo["risk_segment"] == "High")
+            & (demo["contract"] == contract)
+            & (demo["customer_id"] != customer_id)
+        ].copy()
+    else:
+        engine = get_engine()
+        pool = pd.read_sql(
+            "SELECT * FROM vw_churn_predictions WHERE risk_segment = 'High' "
+            "AND contract = %(contract)s AND customer_id != %(cid)s",
+            engine,
+            params={"contract": contract, "cid": customer_id},
+        )
+
+    if pool.empty:
+        return pool
+
+    pool["tenure_diff"] = (pool["tenure"] - tenure).abs()
+    cols = [
+        c
+        for c in [
+            "customer_id",
+            "tenure",
+            "monthly_charges",
+            "churn_probability",
+            "risk_segment",
+        ]
+        if c in pool.columns
+    ]
+    return pool.sort_values("tenure_diff").head(limit)[cols]
+
+
 def _demo_prediction_result(row: pd.Series) -> tuple[dict, list, str]:
     """Builds a (result, factors, explanation) tuple from a precomputed demo row,
     mirroring ChurnPredictor.predict_single / explain_prediction / explain_with_gpt."""
@@ -100,51 +142,91 @@ def _demo_prediction_result(row: pd.Series) -> tuple[dict, list, str]:
     return result, factors, explanation
 
 
-def probability_gauge(probability: float, color: str):
-    fig = go.Figure(
-        go.Indicator(
-            mode="gauge+number",
-            value=probability * 100,
-            number={"suffix": "%"},
-            title={"text": "Churn Probability"},
-            gauge={
-                "axis": {"range": [0, 100]},
-                "bar": {"color": color},
-                "steps": [
-                    {"range": [0, 40], "color": "#e6f4ea"},
-                    {"range": [40, 70], "color": "#fdf0e0"},
-                    {"range": [70, 100], "color": "#fbe4e2"},
-                ],
-            },
-        )
-    )
-    fig.update_layout(height=300, margin=dict(l=20, r=20, t=50, b=20))
-    return fig
-
-
 def render_profile_card(customer: pd.Series) -> None:
     st.subheader("Customer Profile")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(f"**Customer ID:** {customer['customer_id']}")
-        st.markdown(f"**Gender:** {customer['gender']}")
-        st.markdown(
-            f"**Senior Citizen:** {'Yes' if customer['senior_citizen'] else 'No'}"
+    with st.container(border=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("**👤 Demographics**")
+            st.markdown(f"Customer ID: `{customer['customer_id']}`")
+            st.markdown(f"Gender: {customer['gender']}")
+            st.markdown(
+                f"Senior Citizen: {'Yes' if customer['senior_citizen'] else 'No'}"
+            )
+            st.markdown(f"Partner: {customer['partner']}")
+            st.markdown(f"Dependents: {customer['dependents']}")
+        with col2:
+            st.markdown("**📄 Account**")
+            st.markdown(f"Tenure: {customer['tenure']} months")
+            st.markdown(f"Contract: {customer['contract']}")
+            st.markdown(f"Payment Method: {customer['payment_method']}")
+            st.markdown(f"Internet Service: {customer['internet_service']}")
+            st.markdown(f"Phone Service: {customer['phone_service']}")
+        with col3:
+            st.markdown("**💰 Billing & Services**")
+            st.markdown(f"Monthly Charges: ${customer['monthly_charges']:.2f}")
+            st.markdown(f"Total Charges: ${customer['total_charges']:.2f}")
+            st.markdown(f"Online Security: {customer['online_security']}")
+            st.markdown(f"Tech Support: {customer['tech_support']}")
+            st.markdown(f"Actual Churn (historical): {customer['churn']}")
+
+
+def render_animated_probability(probability: float, color: str) -> None:
+    st.markdown("**Churn Probability**")
+    bar = st.progress(0)
+    target = int(round(probability * 100))
+    step = max(1, target // 25)
+    for pct in range(0, target + 1, step):
+        bar.progress(min(pct, target), text=f"{min(pct, target)}%")
+        time.sleep(0.01)
+    bar.progress(target, text=f"{target}%")
+    st.markdown(
+        f"<span style='background-color:{color}; color:white; padding:6px 16px; "
+        f"border-radius:16px; font-weight:600;'>{target}% churn probability</span>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_risk_factor_badges(factors: list) -> None:
+    st.markdown(f"#### Top {len(factors)} Risk Factors")
+    badges_html = ""
+    for factor in factors:
+        increases = factor["direction"] == "increases risk"
+        bg = "#fbe4e2" if increases else "#e6f4ea"
+        fg = "#d62728" if increases else "#2ca02c"
+        arrow = "▲" if increases else "▼"
+        badges_html += (
+            f"<span style='display:inline-block; background-color:{bg}; color:{fg}; "
+            f"padding:6px 12px; margin:4px 6px 4px 0; border-radius:14px; font-size:0.85rem; "
+            f"font-weight:600;'>{arrow} {factor['feature'].replace('_', ' ')} "
+            f"(SHAP={factor['shap_value']:+.3f})</span>"
         )
-        st.markdown(f"**Partner:** {customer['partner']}")
-        st.markdown(f"**Dependents:** {customer['dependents']}")
-    with col2:
-        st.markdown(f"**Tenure:** {customer['tenure']} months")
-        st.markdown(f"**Contract:** {customer['contract']}")
-        st.markdown(f"**Payment Method:** {customer['payment_method']}")
-        st.markdown(f"**Internet Service:** {customer['internet_service']}")
-        st.markdown(f"**Phone Service:** {customer['phone_service']}")
-    with col3:
-        st.markdown(f"**Monthly Charges:** ${customer['monthly_charges']:.2f}")
-        st.markdown(f"**Total Charges:** ${customer['total_charges']:.2f}")
-        st.markdown(f"**Online Security:** {customer['online_security']}")
-        st.markdown(f"**Tech Support:** {customer['tech_support']}")
-        st.markdown(f"**Actual Churn (historical):** {customer['churn']}")
+    st.markdown(badges_html, unsafe_allow_html=True)
+
+
+def render_action_cards(actions: list) -> None:
+    st.markdown("#### Recommended Retention Actions")
+    for i, action in enumerate(actions):
+        icon = ACTION_ICONS[i % len(ACTION_ICONS)]
+        with st.container(border=True):
+            st.markdown(f"{icon} &nbsp; {action}")
+
+
+def render_similar_customers(customer_id: str, contract: str, tenure: int) -> None:
+    st.markdown("#### Similar High Risk Customers")
+    st.caption(
+        f"Other High risk customers on a {contract} contract, closest in tenure."
+    )
+    similar = load_similar_high_risk(customer_id, contract, tenure)
+    if similar.empty:
+        st.info("No other High risk customers found with a matching profile.")
+        return
+    display = similar.rename(
+        columns={"churn_probability": "probability", "risk_segment": "segment"}
+    )
+    if "probability" in display.columns:
+        display["probability"] = display["probability"].map(lambda p: f"{p:.1%}")
+    st.dataframe(display, use_container_width=True, hide_index=True)
 
 
 def main() -> None:
@@ -219,23 +301,22 @@ def main() -> None:
             f"border-radius:16px; font-weight:600;'>{result['risk_segment']} Risk</span>",
             unsafe_allow_html=True,
         )
-        st.markdown(f"**Churn Probability:** {result['churn_probability']:.1%}")
-
-        st.markdown(f"#### Top {len(factors)} Risk Factors")
-        for i, factor in enumerate(factors, start=1):
-            st.markdown(
-                f"{i}. **{factor['feature'].replace('_', ' ')}** — {factor['direction']} "
-                f"(SHAP={factor['shap_value']:+.4f})"
-            )
+        render_animated_probability(result["churn_probability"], color)
+        render_risk_factor_badges(factors)
 
     st.divider()
     st.markdown("#### AI Explanation")
     st.info(explanation)
 
-    st.markdown("#### Recommended Retention Actions")
-    actions = RETENTION_ACTIONS.get(result["risk_segment"], RETENTION_ACTIONS["Low"])
-    for action in actions:
-        st.markdown(f"- {action}")
+    render_action_cards(
+        RETENTION_ACTIONS.get(result["risk_segment"], RETENTION_ACTIONS["Low"])
+    )
+
+    if result["risk_segment"] == "High":
+        st.divider()
+        render_similar_customers(
+            customer["customer_id"], customer["contract"], customer["tenure"]
+        )
 
 
 main()

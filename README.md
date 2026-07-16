@@ -9,6 +9,16 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+## ✨ Project Highlights
+- 🤖 6 ML models trained and compared
+- 📊 AUC score of 0.96 on test set
+- 🎯 SHAP values for model explainability
+- 🔮 GPT-powered churn explanations
+- 📈 MLflow experiment tracking
+- 🚀 FastAPI prediction endpoint
+- 📱 Interactive Streamlit dashboard
+- 🐳 Docker ready for deployment
+
 ## Project Overview
 An end-to-end machine learning system that predicts customer churn using the Telco Customer Churn dataset. The project covers the full ML lifecycle: data ingestion, feature engineering, model training, evaluation, serving via a REST API, and an interactive dashboard — with GPT-powered natural-language explanations for each at-risk customer.
 

@@ -387,6 +387,14 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Generated demo data files committed to GitHub
 - Dashboard ready for Streamlit Community Cloud deployment
 
+✅ **Day 16 — Dashboard Polish**
+- Polished overview page with churn trend chart
+- Added probability gauge chart to predictions page
+- Improved customer lookup with animated progress bar
+- Added interactive model selector to performance page
+- Added revenue at risk chart to retention page
+- All 5 dashboard pages polished and production ready
+
 ## Future Work
 - Add real-time streaming predictions (Kafka / Redis)
 - Scheduled retraining pipeline (Airflow / cron)

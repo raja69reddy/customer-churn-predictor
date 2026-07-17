@@ -4,6 +4,8 @@ An end-to-end machine learning system that predicts telecom customer churn and r
 
 **Live Demo:** _coming soon — will be linked here once deployed to Streamlit Community Cloud_
 
+**Topics:** machine-learning, churn-prediction, python, postgresql, streamlit, fastapi, xgboost, lightgbm, mlflow, shap, data-analytics, scikit-learn
+
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)
 ![Scikit-Learn](https://img.shields.io/badge/ScikitLearn-1.3-orange)

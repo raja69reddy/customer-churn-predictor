@@ -1,5 +1,9 @@
 # Customer Churn Predictor
 
+An end-to-end machine learning system that predicts telecom customer churn and recommends retention actions, with a REST API, an interactive dashboard, and GPT-powered explanations.
+
+**Live Demo:** _coming soon — will be linked here once deployed to Streamlit Community Cloud_
+
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue)
 ![Scikit-Learn](https://img.shields.io/badge/ScikitLearn-1.3-orange)
@@ -18,6 +22,15 @@
 - 🚀 FastAPI prediction endpoint
 - 📱 Interactive Streamlit dashboard
 - 🐳 Docker ready for deployment
+
+## Quick Start
+```bash
+git clone https://github.com/raja69reddy/customer-churn-predictor
+cd customer-churn-predictor
+pip install -r requirements.txt
+python mock_data/gen_customers.py
+streamlit run dashboard/app.py
+```
 
 ## Project Overview
 An end-to-end machine learning system that predicts customer churn using the Telco Customer Churn dataset. The project covers the full ML lifecycle: data ingestion, feature engineering, model training, evaluation, serving via a REST API, and an interactive dashboard — with GPT-powered natural-language explanations for each at-risk customer.

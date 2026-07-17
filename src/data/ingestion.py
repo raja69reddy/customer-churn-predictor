@@ -62,7 +62,9 @@ def validate(df: pd.DataFrame) -> pd.DataFrame:
     # Avoid select_dtypes(include="str") here — it raises TypeError on pandas 2.x
     # ("numpy string dtypes are not allowed"). A manual dtype check works across
     # pandas 2.x/3.x alike (see the equivalent fix in src/features/engineering.py).
-    str_cols = [c for c in df.columns if df[c].dtype == object or df[c].dtype.name == "str"]
+    str_cols = [
+        c for c in df.columns if df[c].dtype == object or df[c].dtype.name == "str"
+    ]
     df[str_cols] = df[str_cols].apply(lambda s: s.str.strip())
 
     # convert total_charges to float (empty strings → NaN → 0)

@@ -14,6 +14,9 @@ An end-to-end machine learning system that predicts telecom customer churn and r
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.28-red)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Built in 21 days](https://img.shields.io/badge/Built%20in-21%20Days-brightgreen)
+
+**Project completed:** 2026-07-19
 
 ## ✨ Project Highlights
 - 🤖 6 ML models trained and compared
@@ -144,7 +147,7 @@ psql -U postgres -d churn_db -f sql/schema.sql
 python -m src.data.ingestion
 
 # Train models
-python -m src.models.train
+python -m src.models.run_training
 
 # Start the FastAPI server
 uvicorn api.main:app --reload

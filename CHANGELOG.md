@@ -1,5 +1,12 @@
 # Changelog
 
+## Day 21 - Final Review + v1.0.0 Release
+- Final pipeline run successful
+- All tests passing
+- README fully polished
+- Tagged v1.0.0 release
+- Project complete and portfolio ready!
+
 ## Day 20 - LinkedIn + Community Sharing
 - Created docs/linkedin_post.md
 - Created docs/interview_prep.md with STAR answers

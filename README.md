@@ -457,6 +457,13 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Ran black formatter one final time
 - Project is clean and portfolio ready! 🎉
 
+✅ **Day 20 — LinkedIn + Community Sharing**
+- Created docs/linkedin_post.md — ready to post
+- Created docs/interview_prep.md with 5 STAR answers
+- Created docs/project_walkthrough.md — 5 min script
+- Added How to Demo section to README
+- Project fully documented and ready to share!
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

@@ -163,6 +163,19 @@ streamlit run dashboard/app.py
 7. Start API: `uvicorn api.main:app --reload`
 8. View MLflow: `mlflow ui --port 5000`
 
+## 🎬 How to Demo This Project
+1. Clone the repo
+2. Run: `python mock_data/gen_customers.py`
+3. Run: `python -m src.data.ingestion --mode full`
+4. Run: `python -m src.features.run_engineering`
+5. Run: `python -m src.models.run_training`
+6. Run: `streamlit run dashboard/app.py`
+7. Open http://localhost:8501
+
+_(Steps 3-5 use `python -m` module invocation rather than a bare script path — every module in
+this repo uses absolute `src.x.y` imports that only resolve when run that way. If no database is
+configured, skip straight to step 6 — the dashboard automatically falls back to demo mode.)_
+
 ## Dashboard
 The Streamlit dashboard (dashboard/app.py) provides:
 - Overall churn rate KPIs

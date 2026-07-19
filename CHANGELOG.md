@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 20 - LinkedIn + Community Sharing
+- Created docs/linkedin_post.md
+- Created docs/interview_prep.md with STAR answers
+- Created docs/project_walkthrough.md
+- Added How to Demo section to README
+
 ## Day 18 - Final Polish
 - Added quick start section to README
 - Created project summary notebook

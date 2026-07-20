@@ -28,6 +28,9 @@ from xgboost import XGBClassifier  # noqa: E402
 
 from src.models import mlflow_setup  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
+from src.utils.logging_config import setup_logging  # noqa: E402
+
+log = setup_logging("train")
 
 TARGET_COLUMN = "churn_label"
 NON_FEATURE_COLUMNS = [
@@ -57,6 +60,7 @@ class ModelTrainer:
 
         self.df = df
         self.feature_columns = [c for c in df.columns if c not in NON_FEATURE_COLUMNS]
+        log.info("Loaded %d rows from processed_customers for training", len(df))
         return df
 
     def get_feature_columns(self) -> list:

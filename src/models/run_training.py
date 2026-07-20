@@ -1,5 +1,6 @@
 """Runs the full baseline model training + evaluation pipeline."""
 
+import time
 from datetime import datetime
 
 from sqlalchemy import text
@@ -7,11 +8,17 @@ from sqlalchemy import text
 from src.models.evaluate import ModelEvaluator
 from src.models.train import ModelTrainer
 from src.utils.db import get_engine
+from src.utils.logging_config import setup_logging
+
+log = setup_logging("run_training")
 
 MODEL_VERSION = "v1"
 
 
 def run() -> None:
+    start = time.time()
+    log.info("Model training started at %s", datetime.now().isoformat())
+
     trainer = ModelTrainer()
     df = trainer.load_processed_data()
     trainer.split_data(df)
@@ -71,6 +78,15 @@ def run() -> None:
                 },
             )
     print("Logged all results to model_registry table")
+
+    elapsed = time.time() - start
+    log.info(
+        "Model training finished at %s — %d rows used, %d models trained in %.2fs",
+        datetime.now().isoformat(),
+        df.shape[0],
+        len(models),
+        elapsed,
+    )
 
 
 if __name__ == "__main__":

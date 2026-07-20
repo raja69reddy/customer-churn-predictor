@@ -7,10 +7,9 @@ Usage:
 """
 
 import argparse
-import logging
 import os
 import time
-from datetime import date
+from datetime import date, datetime
 
 import mlflow
 import pandas as pd
@@ -21,13 +20,9 @@ from tqdm import tqdm
 from src.models import mlflow_registry, mlflow_setup
 from src.models.predict import ChurnPredictor
 from src.utils.db import get_engine
+from src.utils.logging_config import setup_logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-log = logging.getLogger(__name__)
+log = setup_logging("batch_scorer")
 
 CHUNK_SIZE = 500
 DEFAULT_HIGH_THRESHOLD = 0.7
@@ -187,6 +182,12 @@ def run(mode: str = "full", threshold: float = None, output: str = "both") -> No
         log.info("Saved %d predictions to churn_predictions table", db_rows)
 
     elapsed = time.time() - start
+    log.info(
+        "Batch scoring finished at %s — %d rows processed in %.2fs",
+        datetime.now().isoformat(),
+        len(scored),
+        elapsed,
+    )
 
     mlflow_setup.setup_experiment()
     with mlflow.start_run(run_name="batch_scoring"):

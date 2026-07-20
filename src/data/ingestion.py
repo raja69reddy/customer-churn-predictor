@@ -1,20 +1,16 @@
 """Data ingestion pipeline — loads customers.csv into raw_customers table."""
 
 import argparse
-import logging
 import time
+from datetime import datetime
 
 import pandas as pd
 from sqlalchemy import text
 
 from src.utils.db import get_engine
+from src.utils.logging_config import setup_logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-log = logging.getLogger(__name__)
+log = setup_logging("ingestion")
 
 REQUIRED_COLUMNS = [
     "customer_id",
@@ -96,8 +92,13 @@ def validate(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def ingest(csv_path: str, mode: str = "full") -> int:
-    log.info("Starting ingestion — mode=%s, file=%s", mode, csv_path)
     start = time.time()
+    log.info(
+        "Ingestion started at %s — mode=%s, file=%s",
+        datetime.now().isoformat(),
+        mode,
+        csv_path,
+    )
 
     df = load_csv(csv_path)
     log.info("Loaded %d rows from CSV", len(df))
@@ -118,9 +119,12 @@ def ingest(csv_path: str, mode: str = "full") -> int:
                 new_rows = df[~df["customer_id"].isin(existing["customer_id"])]
                 if new_rows.empty:
                     log.info("No new rows to insert")
-                    return 0
-                new_rows.to_sql("raw_customers", conn, if_exists="append", index=False)
-                inserted = len(new_rows)
+                    inserted = 0
+                else:
+                    new_rows.to_sql(
+                        "raw_customers", conn, if_exists="append", index=False
+                    )
+                    inserted = len(new_rows)
             else:
                 raise ValueError(f"Unknown mode: {mode}")
     except Exception as e:
@@ -128,7 +132,12 @@ def ingest(csv_path: str, mode: str = "full") -> int:
         raise
 
     elapsed = time.time() - start
-    log.info("Inserted %d rows into raw_customers in %.2fs", inserted, elapsed)
+    log.info(
+        "Ingestion finished at %s — %d rows processed in %.2fs",
+        datetime.now().isoformat(),
+        inserted,
+        elapsed,
+    )
     print(f"Inserted {inserted} rows into raw_customers")
     return inserted
 

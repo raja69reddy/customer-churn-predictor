@@ -12,6 +12,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.utils.db import get_engine
+from src.utils.logging_config import setup_logging
+
+log = setup_logging("engineering")
 
 NUMERIC_COLS = ["tenure", "monthly_charges", "total_charges"]
 
@@ -72,7 +75,9 @@ class FeatureEngineer:
 
     def load_raw_data(self) -> pd.DataFrame:
         engine = get_engine()
-        return pd.read_sql("SELECT * FROM raw_customers", engine)
+        df = pd.read_sql("SELECT * FROM raw_customers", engine)
+        log.info("Loaded %d rows from raw_customers", len(df))
+        return df
 
     def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()

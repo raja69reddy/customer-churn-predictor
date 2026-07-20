@@ -9,3 +9,5 @@ mlflow/*
 data/raw/
 data/processed/
 .ipynb_checkpoints/
+logs/*
+!logs/.gitkeep

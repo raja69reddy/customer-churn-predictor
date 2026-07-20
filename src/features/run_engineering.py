@@ -1,9 +1,15 @@
 """Runs the full feature engineering pipeline against PostgreSQL raw_customers."""
 
+import time
+from datetime import datetime
+
 from sqlalchemy import text
 
 from src.features.engineering import FeatureEngineer
 from src.utils.db import get_engine
+from src.utils.logging_config import setup_logging
+
+log = setup_logging("run_engineering")
 
 PROCESSED_COLUMNS = [
     "customer_id",
@@ -17,6 +23,9 @@ PROCESSED_COLUMNS = [
 
 
 def run() -> None:
+    start = time.time()
+    log.info("Feature engineering started at %s", datetime.now().isoformat())
+
     fe = FeatureEngineer()
 
     raw_df = fe.load_raw_data()
@@ -52,6 +61,14 @@ def run() -> None:
 
     print(f"\nSaved {len(processed)} rows to processed_customers table")
     print(f"\nFeature engineering complete: {len(new_features)} features created")
+
+    elapsed = time.time() - start
+    log.info(
+        "Feature engineering finished at %s — %d rows processed in %.2fs",
+        datetime.now().isoformat(),
+        len(processed),
+        elapsed,
+    )
 
 
 if __name__ == "__main__":

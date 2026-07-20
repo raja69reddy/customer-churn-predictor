@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 22 - Documentation + Logging
+- Created docs/data_dictionary.md
+- Created docs/architecture.md
+- Added logging to all src scripts
+- Created utils/project_stats.py
+
 ## Day 21 - Final Review + v1.0.0 Release
 - Final pipeline run successful
 - All tests passing

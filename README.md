@@ -482,6 +482,13 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Created utils/project_stats.py for project metrics
 - Project documentation is now comprehensive
 
+✅ **Day 23 — SQL Views + Business Analysis**
+- Created vw_churn_by_tenure.sql with revenue at risk
+- Created vw_churn_by_services.sql with service analysis
+- Created customer_lifetime_value.sql — CLV calculations
+- Created retention_roi.sql — campaign ROI analysis
+- Business analysis layer now complete
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

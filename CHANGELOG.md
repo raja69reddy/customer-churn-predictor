@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 23 - SQL Views + Business Analysis
+- Created vw_churn_by_tenure.sql
+- Created vw_churn_by_services.sql
+- Created customer_lifetime_value.sql
+- Created retention_roi.sql
+
 ## Day 22 - Documentation + Logging
 - Created docs/data_dictionary.md
 - Created docs/architecture.md

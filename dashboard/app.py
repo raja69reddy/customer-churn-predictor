@@ -10,6 +10,11 @@ import streamlit as st
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard import demo_mode  # noqa: E402
+from src.analysis.revenue_analysis import (  # noqa: E402
+    calculate_clv_by_segment,
+    calculate_revenue_at_risk,
+    estimate_retention_savings,
+)
 from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(
@@ -130,6 +135,49 @@ def load_project_stats() -> dict:
     }
 
 
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
+def load_revenue_metrics() -> dict:
+    """Revenue-at-risk / CLV / ROI metrics, via src/analysis/revenue_analysis.py.
+
+    In demo mode, the demo predictions CSV is passed in directly as the `df` argument each
+    function already accepts — it has the same columns _load_predictions() would return from
+    a live query, so no separate demo-mode logic needs to be duplicated here.
+    """
+    demo_df = demo_mode.get_demo_predictions() if demo_mode.is_demo_mode() else None
+
+    return {
+        "revenue_at_risk": calculate_revenue_at_risk(demo_df),
+        "clv_by_segment": calculate_clv_by_segment(demo_df),
+        "roi": estimate_retention_savings(df=demo_df),
+    }
+
+
+def render_revenue_metrics() -> None:
+    st.divider()
+    st.subheader("💰 Revenue at Risk")
+
+    try:
+        metrics = load_revenue_metrics()
+    except Exception:
+        st.error(
+            "⚠️ Could not load revenue metrics. Please check your connection and try again."
+        )
+        return
+
+    roi = metrics["roi"]
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Revenue at Risk", f"${metrics['revenue_at_risk']:,.2f}/mo")
+    col2.metric("High Risk Customer Count", f"{roi['customers_targeted']:,}")
+    col3.metric("Estimated Savings if Retained", f"${roi['revenue_recovered']:,.2f}/yr")
+    st.caption(
+        f"Savings assume a ${roi['campaign_cost_per_customer']:.0f}/customer retention "
+        f"campaign at a {roi['success_rate']:.0%} success rate, annualized."
+    )
+
+    st.markdown("#### Avg CLV by Segment")
+    st.dataframe(metrics["clv_by_segment"], use_container_width=True, hide_index=True)
+
+
 def main() -> None:
     render_mode_badge()
 
@@ -160,6 +208,8 @@ def main() -> None:
         "Model AUC Score",
         f"{stats['model_auc']:.4f}" if stats["model_auc"] is not None else "N/A",
     )
+
+    render_revenue_metrics()
 
 
 if __name__ == "__main__":

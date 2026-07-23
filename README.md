@@ -489,6 +489,14 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Created retention_roi.sql — campaign ROI analysis
 - Business analysis layer now complete
 
+✅ **Day 24 — Cohort + Revenue Analysis**
+- Created src/analysis/cohort_analysis.py
+- Created src/analysis/revenue_analysis.py
+- Revenue at risk calculated from high risk customers
+- CLV analysis by risk segment complete
+- Added revenue metrics to dashboard home page
+- ROI estimator for retention campaigns built
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

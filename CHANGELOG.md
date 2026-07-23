@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 24 - Cohort + Revenue Analysis
+- Created src/analysis/cohort_analysis.py
+- Created src/analysis/revenue_analysis.py
+- Added revenue metrics to dashboard home page
+- Revenue at risk calculations complete
+
 ## Day 23 - SQL Views + Business Analysis
 - Created vw_churn_by_tenure.sql
 - Created vw_churn_by_services.sql

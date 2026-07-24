@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 25 - Advanced Analysis Features
+- Created src/analysis/churn_drivers.py
+- Created src/analysis/what_if_analyzer.py
+- Added what-if analysis to customer lookup page
+- Created src/analysis/segment_profiler.py
+
 ## Day 24 - Cohort + Revenue Analysis
 - Created src/analysis/cohort_analysis.py
 - Created src/analysis/revenue_analysis.py

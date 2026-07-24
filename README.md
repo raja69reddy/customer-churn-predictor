@@ -497,6 +497,13 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Added revenue metrics to dashboard home page
 - ROI estimator for retention campaigns built
 
+✅ **Day 25 — Advanced Analysis Features**
+- Created churn_drivers.py with SHAP-based insights
+- Created what_if_analyzer.py for scenario analysis
+- Added what-if analysis section to customer lookup page
+- Created segment_profiler.py for segment comparison
+- Advanced business analysis layer complete
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

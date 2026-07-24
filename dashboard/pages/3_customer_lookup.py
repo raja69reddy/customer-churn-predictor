@@ -18,12 +18,18 @@ from dashboard.components.metrics import get_risk_color  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
 
 try:
+    from src.analysis.what_if_analyzer import (
+        what_if_add_security,
+        what_if_contract_change,
+        what_if_reduce_charges,
+    )
     from src.models.predict import RETENTION_ACTIONS, ChurnPredictor
 except ImportError:
     # Heavy ML deps (xgboost/shap/openai/...) aren't in requirements_streamlit.txt —
     # demo mode never needs a live ChurnPredictor, so fall back to a static copy of
-    # RETENTION_ACTIONS and treat the live-scoring path as unavailable.
+    # RETENTION_ACTIONS and treat the live-scoring / what-if paths as unavailable.
     ChurnPredictor = None
+    what_if_contract_change = what_if_add_security = what_if_reduce_charges = None
     RETENTION_ACTIONS = {
         "High": [
             "Offer a loyalty discount or incentive to switch to a longer-term contract",
@@ -212,6 +218,73 @@ def render_action_cards(actions: list) -> None:
             st.markdown(f"{icon} &nbsp; {action}")
 
 
+def _what_if_scenarios() -> dict:
+    return {
+        "Switch to One year contract": lambda cid: what_if_contract_change(
+            cid, "One year"
+        ),
+        "Switch to Two year contract": lambda cid: what_if_contract_change(
+            cid, "Two year"
+        ),
+        "Add online security": lambda cid: what_if_add_security(cid),
+        "Reduce charges by 10%": lambda cid: what_if_reduce_charges(cid, 10.0),
+        "Reduce charges by 20%": lambda cid: what_if_reduce_charges(cid, 20.0),
+    }
+
+
+def _recommend_action_for_scenario(result: dict) -> str:
+    if result["new_segment"] != result["original_segment"]:
+        return (
+            f"🟢 Strong lever — this alone would move the customer from "
+            f"{result['original_segment']} to {result['new_segment']} risk."
+        )
+    if result["probability_change"] <= -0.05:
+        return "🟡 Meaningful risk reduction — worth pursuing alongside other retention actions."
+    if result["probability_change"] < 0:
+        return "🟠 Modest effect on its own — likely needs to be combined with other actions."
+    return "⚪ Minimal or no effect for this customer — consider a different lever."
+
+
+def render_what_if_section(customer_id: str) -> None:
+    st.divider()
+    st.subheader("🔀 What If Scenarios")
+
+    if demo_mode.is_demo_mode() or what_if_contract_change is None:
+        st.info(
+            "ℹ️ What-if analysis requires a live model connection and the full ML "
+            "dependencies, which aren't available in demo mode. Run this dashboard "
+            "locally with the full `requirements.txt` and a populated database to use it."
+        )
+        return
+
+    scenarios = _what_if_scenarios()
+    scenario_name = st.selectbox("Select a scenario to test", list(scenarios.keys()))
+
+    if not st.button("Run What-If Scenario"):
+        return
+
+    try:
+        with st.spinner("Re-scoring customer under this scenario..."):
+            result = scenarios[scenario_name](customer_id)
+    except Exception as e:
+        st.error(f"⚠️ Could not run this scenario: {e}")
+        return
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Current Probability", f"{result['original_probability']:.1%}")
+    col2.metric(
+        "Predicted Probability",
+        f"{result['new_probability']:.1%}",
+        delta=f"{result['probability_change']:+.1%}",
+        delta_color="inverse",
+    )
+    col3.metric(
+        "Risk Segment", f"{result['original_segment']} → {result['new_segment']}"
+    )
+
+    st.markdown(f"**Recommended action:** {_recommend_action_for_scenario(result)}")
+
+
 def render_similar_customers(customer_id: str, contract: str, tenure: int) -> None:
     st.markdown("#### Similar High Risk Customers")
     st.caption(
@@ -243,18 +316,26 @@ def main() -> None:
     st.title("Customer Lookup")
 
     placeholder = "e.g. CUST-DEMO-001" if is_demo else "e.g. CUST-00001"
-    customer_id = st.text_input("Customer ID", placeholder=placeholder)
+    customer_id_input = st.text_input("Customer ID", placeholder=placeholder)
     predict_clicked = st.button("Predict Churn", type="primary")
 
-    if not predict_clicked:
-        return
+    # Persist the looked-up customer across reruns triggered by *other* widgets further down
+    # the page (e.g. the What-If "Run" button) — without this, any button click below would
+    # reset predict_clicked to False and wipe the whole page back to its initial state, since
+    # Streamlit reruns the whole script top-to-bottom on every interaction.
+    if predict_clicked:
+        if not customer_id_input:
+            st.warning("Enter a customer ID first.")
+            st.session_state.pop("customer_lookup_id", None)
+            return
+        st.session_state["customer_lookup_id"] = customer_id_input.strip()
 
+    customer_id = st.session_state.get("customer_lookup_id")
     if not customer_id:
-        st.warning("Enter a customer ID first.")
         return
 
     try:
-        matches = load_customer(customer_id.strip())
+        matches = load_customer(customer_id)
     except Exception:
         st.error(
             "⚠️ Could not connect to the database. Please check your connection and try again."
@@ -311,6 +392,8 @@ def main() -> None:
     render_action_cards(
         RETENTION_ACTIONS.get(result["risk_segment"], RETENTION_ACTIONS["Low"])
     )
+
+    render_what_if_section(customer["customer_id"])
 
     if result["risk_segment"] == "High":
         st.divider()

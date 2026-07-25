@@ -28,7 +28,7 @@ PSI_BUCKETS = 10
 DEFAULT_ALERT_THRESHOLD = 0.2
 
 
-def _psi_status(psi: float) -> str:
+def classify_psi(psi: float) -> str:
     if psi < 0.1:
         return "Stable"
     if psi < 0.2:
@@ -98,7 +98,7 @@ def check_prediction_drift(trainer: ModelTrainer = None, model=None) -> dict:
     result = {
         "metric": "prediction_scores",
         "psi": psi,
-        "status": _psi_status(psi),
+        "status": classify_psi(psi),
         "expected_mean": round(float(expected_scores.mean()), 4),
         "actual_mean": round(float(actual_scores.mean()), 4),
     }
@@ -121,7 +121,7 @@ def check_feature_drift(trainer: ModelTrainer = None) -> pd.DataFrame:
     rows = []
     for feature in trainer.get_feature_columns():
         psi = calculate_psi(trainer.X_train[feature], trainer.X_test[feature])
-        rows.append({"feature": feature, "psi": psi, "status": _psi_status(psi)})
+        rows.append({"feature": feature, "psi": psi, "status": classify_psi(psi)})
 
     result = (
         pd.DataFrame(rows).sort_values("psi", ascending=False).reset_index(drop=True)
@@ -141,7 +141,7 @@ def generate_monitoring_report() -> dict:
         "model_name": model_name,
         "prediction_drift": prediction_drift,
         "feature_drift": feature_drift,
-        "overall_status": _psi_status(
+        "overall_status": classify_psi(
             max(prediction_drift["psi"], feature_drift["psi"].max())
         ),
     }

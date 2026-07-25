@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 26 - Model Monitoring
+- Created src/monitoring/model_monitor.py
+- Created src/monitoring/data_drift_detector.py
+- Created dashboard/pages/6_monitoring.py
+- PSI-based drift detection implemented
+
 ## Day 25 - Advanced Analysis Features
 - Created src/analysis/churn_drivers.py
 - Created src/analysis/what_if_analyzer.py

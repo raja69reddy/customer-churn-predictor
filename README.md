@@ -504,6 +504,14 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Created segment_profiler.py for segment comparison
 - Advanced business analysis layer complete
 
+✅ **Day 26 — Model Monitoring**
+- Created model_monitor.py with PSI drift detection
+- Created data_drift_detector.py for feature drift
+- Model monitoring ran successfully
+- Created dashboard/pages/6_monitoring.py
+- PSI scores calculated for all key features
+- Model monitoring layer complete!
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

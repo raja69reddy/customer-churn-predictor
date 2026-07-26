@@ -141,6 +141,40 @@ def probability_gauge(probability: float, color: str, title: str = "Churn Probab
     return fig
 
 
+def shap_waterfall_chart(explanation: dict):
+    """Waterfall chart from a src.models.model_explainer.explain_prediction() result — starts
+    at the SHAP base value and adds each feature's contribution (already sorted by magnitude)
+    to reach the final model output. Values are in the TreeExplainer's native log-odds/margin
+    space, not probability — consistent with how SHAP values are shown elsewhere in this
+    dashboard (risk factor badges), never back-transformed through a sigmoid."""
+    factors = explanation["factors"]
+    labels = ["Base value"] + [f["feature"].replace("_", " ") for f in factors]
+    values = [explanation["base_value"]] + [f["shap_value"] for f in factors]
+    measures = ["absolute"] + ["relative"] * len(factors)
+
+    fig = go.Figure(
+        go.Waterfall(
+            orientation="v",
+            measure=measures,
+            x=labels,
+            y=values,
+            text=[f"{v:+.3f}" for v in values],
+            textposition="outside",
+            connector={"line": {"color": "rgba(120,120,120,0.4)"}},
+            increasing={"marker": {"color": "#d62728"}},
+            decreasing={"marker": {"color": "#2ca02c"}},
+            totals={"marker": {"color": "#1f77b4"}},
+        )
+    )
+    fig.update_layout(
+        title=f"SHAP Waterfall — {explanation['customer_id']}",
+        yaxis_title="Contribution to model output (log-odds)",
+        showlegend=False,
+        margin=dict(l=20, r=20, t=50, b=20),
+    )
+    return fig
+
+
 def shap_summary_plot(shap_values, features):
     """SHAP beeswarm summary plot. Returns a matplotlib figure (SHAP has no native Plotly API) —
     display it in Streamlit with st.pyplot(fig)."""

@@ -14,6 +14,7 @@ sys.path.insert(
 
 from dashboard import demo_mode  # noqa: E402
 from dashboard.components.charts import probability_gauge  # noqa: E402
+from dashboard.components.charts import shap_waterfall_chart  # noqa: E402
 from dashboard.components.metrics import get_risk_color  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
 
@@ -23,13 +24,20 @@ try:
         what_if_contract_change,
         what_if_reduce_charges,
     )
+    from src.models.model_explainer import compare_customer_to_average
+    from src.models.model_explainer import explain_prediction as shap_explain_prediction
+    from src.models.model_explainer import generate_explanation_text
     from src.models.predict import RETENTION_ACTIONS, ChurnPredictor
 except ImportError:
     # Heavy ML deps (xgboost/shap/openai/...) aren't in requirements_streamlit.txt —
     # demo mode never needs a live ChurnPredictor, so fall back to a static copy of
-    # RETENTION_ACTIONS and treat the live-scoring / what-if paths as unavailable.
+    # RETENTION_ACTIONS and treat the live-scoring / what-if / SHAP-explainer paths as
+    # unavailable.
     ChurnPredictor = None
     what_if_contract_change = what_if_add_security = what_if_reduce_charges = None
+    shap_explain_prediction = None
+    compare_customer_to_average = None
+    generate_explanation_text = None
     RETENTION_ACTIONS = {
         "High": [
             "Offer a loyalty discount or incentive to switch to a longer-term contract",
@@ -83,24 +91,25 @@ def load_customer(customer_id: str) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
-def load_similar_high_risk(
-    customer_id: str, contract: str, tenure: int, limit: int = 5
+def load_similar_customers(
+    customer_id: str, risk_segment: str, contract: str, tenure: int, limit: int = 5
 ) -> pd.DataFrame:
-    """Returns other High-risk customers with the same contract type, ranked by tenure proximity."""
+    """Returns other customers in the same risk segment with the same contract type, ranked
+    by tenure proximity."""
     if demo_mode.is_demo_mode():
         demo = demo_mode.get_demo_predictions()
         pool = demo[
-            (demo["risk_segment"] == "High")
+            (demo["risk_segment"] == risk_segment)
             & (demo["contract"] == contract)
             & (demo["customer_id"] != customer_id)
         ].copy()
     else:
         engine = get_engine()
         pool = pd.read_sql(
-            "SELECT * FROM vw_churn_predictions WHERE risk_segment = 'High' "
+            "SELECT * FROM vw_churn_predictions WHERE risk_segment = %(segment)s "
             "AND contract = %(contract)s AND customer_id != %(cid)s",
             engine,
-            params={"contract": contract, "cid": customer_id},
+            params={"segment": risk_segment, "contract": contract, "cid": customer_id},
         )
 
     if pool.empty:
@@ -218,6 +227,52 @@ def render_action_cards(actions: list) -> None:
             st.markdown(f"{icon} &nbsp; {action}")
 
 
+def render_shap_explanation_section(customer_id: str) -> None:
+    st.divider()
+    st.subheader("🧬 SHAP Waterfall & Explanation")
+
+    if demo_mode.is_demo_mode() or shap_explain_prediction is None:
+        st.info(
+            "ℹ️ SHAP waterfall analysis requires a live model connection and the full ML "
+            "dependencies, which aren't available in demo mode. Run this dashboard "
+            "locally with the full `requirements.txt` and a populated database to use it."
+        )
+        return
+
+    try:
+        with st.spinner("Computing SHAP breakdown..."):
+            explanation = shap_explain_prediction(customer_id)
+            comparison = compare_customer_to_average(customer_id)
+    except Exception as e:
+        st.error(f"⚠️ Could not compute SHAP explanation: {e}")
+        return
+
+    st.plotly_chart(shap_waterfall_chart(explanation), use_container_width=True)
+
+    st.markdown("#### Feature Values vs Population Average")
+    comparison_df = pd.DataFrame(
+        [
+            {
+                "feature": feature,
+                "customer_value": values["customer_value"],
+                "population_average": values["population_average"],
+                "diff": values["diff"],
+            }
+            for feature, values in comparison.items()
+        ]
+    )
+    st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+
+    if st.button("Generate Explanation"):
+        st.session_state[f"generated_explanation_{customer_id}"] = (
+            generate_explanation_text(explanation["factors"][:5])
+        )
+
+    generated = st.session_state.get(f"generated_explanation_{customer_id}")
+    if generated:
+        st.success(generated)
+
+
 def _what_if_scenarios() -> dict:
     return {
         "Switch to One year contract": lambda cid: what_if_contract_change(
@@ -285,14 +340,18 @@ def render_what_if_section(customer_id: str) -> None:
     st.markdown(f"**Recommended action:** {_recommend_action_for_scenario(result)}")
 
 
-def render_similar_customers(customer_id: str, contract: str, tenure: int) -> None:
-    st.markdown("#### Similar High Risk Customers")
+def render_similar_customers(
+    customer_id: str, risk_segment: str, contract: str, tenure: int
+) -> None:
+    st.markdown("#### 🧑‍🤝‍🧑 Compare to Similar Customers")
     st.caption(
-        f"Other High risk customers on a {contract} contract, closest in tenure."
+        f"Other {risk_segment} risk customers on a {contract} contract, closest in tenure."
     )
-    similar = load_similar_high_risk(customer_id, contract, tenure)
+    similar = load_similar_customers(customer_id, risk_segment, contract, tenure)
     if similar.empty:
-        st.info("No other High risk customers found with a matching profile.")
+        st.info(
+            f"No other {risk_segment} risk customers found with a matching profile."
+        )
         return
     display = similar.rename(
         columns={"churn_probability": "probability", "risk_segment": "segment"}
@@ -393,13 +452,17 @@ def main() -> None:
         RETENTION_ACTIONS.get(result["risk_segment"], RETENTION_ACTIONS["Low"])
     )
 
+    render_shap_explanation_section(customer["customer_id"])
+
     render_what_if_section(customer["customer_id"])
 
-    if result["risk_segment"] == "High":
-        st.divider()
-        render_similar_customers(
-            customer["customer_id"], customer["contract"], customer["tenure"]
-        )
+    st.divider()
+    render_similar_customers(
+        customer["customer_id"],
+        result["risk_segment"],
+        customer["contract"],
+        customer["tenure"],
+    )
 
 
 main()

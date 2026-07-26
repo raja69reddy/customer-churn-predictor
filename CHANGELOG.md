@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 27 - Retraining Pipeline + Explainability
+- Created src/models/retrain_pipeline.py
+- Created src/models/model_explainer.py
+- Updated customer lookup with SHAP waterfall chart
+- Created src/pipelines/daily_pipeline.py
+
 ## Day 26 - Model Monitoring
 - Created src/monitoring/model_monitor.py
 - Created src/monitoring/data_drift_detector.py

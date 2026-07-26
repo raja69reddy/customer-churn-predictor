@@ -512,6 +512,13 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - PSI scores calculated for all key features
 - Model monitoring layer complete!
 
+✅ **Day 27 — Retraining Pipeline + Explainability**
+- Created retrain_pipeline.py with auto-promote logic
+- Created model_explainer.py with SHAP explanations
+- Updated customer lookup with SHAP waterfall chart
+- Created daily_pipeline.py for automated daily runs
+- Full MLOps pipeline now complete!
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

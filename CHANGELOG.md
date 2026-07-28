@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 28 - Segmentation + Trend Analysis
+- Created src/analysis/customer_segmentation.py
+- Created dashboard/pages/7_segmentation.py
+- Created src/analysis/trend_analyzer.py
+- Added trend analysis to overview page
+
 ## Day 27 - Retraining Pipeline + Explainability
 - Created src/models/retrain_pipeline.py
 - Created src/models/model_explainer.py

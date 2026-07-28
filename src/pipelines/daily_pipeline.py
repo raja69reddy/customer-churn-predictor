@@ -12,6 +12,7 @@ Requires the full ML stack — not demo-mode safe.
 """
 
 import os
+import time
 from datetime import datetime
 
 import mlflow
@@ -27,6 +28,7 @@ from src.models import (
 from src.models.retrain_pipeline import check_retrain_needed, save_retrain_report
 from src.utils.db import get_engine
 from src.utils.logging_config import setup_logging
+from src.utils.pipeline_tracking import record_pipeline_run
 
 log = setup_logging("daily_pipeline")
 
@@ -62,17 +64,24 @@ def run_incremental_ingestion(csv_path: str = RAW_CSV_PATH) -> int:
     return inserted
 
 
-def rescore_all_customers() -> None:
+def rescore_all_customers() -> int:
     """Step 3: re-scores every customer with the currently active model, then restores the
     retention_priority/recommended_action/estimated_revenue_at_risk/days_since_last_score
     columns that a full batch_scorer run always wipes to NULL (see
     src/models/update_prediction_schema.py) — folding that previously-manual post-batch-scoring
-    step into the pipeline itself."""
+    step into the pipeline itself. Returns the number of customers rescored."""
     batch_scorer.run(mode="full")
     update_prediction_schema.run()
-    log.info(
-        "rescore_all_customers: full rescore + prediction-schema backfill complete"
+
+    engine = get_engine()
+    rescored = int(
+        pd.read_sql("SELECT COUNT(*) AS n FROM churn_predictions", engine)["n"].iloc[0]
     )
+    log.info(
+        "rescore_all_customers: full rescore of %d customers + prediction-schema backfill complete",
+        rescored,
+    )
+    return rescored
 
 
 def check_drift() -> dict:
@@ -135,7 +144,9 @@ def generate_daily_report(steps: dict, output_dir: str = OUTPUT_DIR) -> str:
 
 
 def run() -> dict:
-    """Runs the full daily pipeline end-to-end, then logs a summary to MLflow.
+    """Runs the full daily pipeline end-to-end, then logs a summary to MLflow and to the
+    shared pipeline_runs history table (see src/utils/pipeline_tracking.py) — the latter is
+    what dashboard/pages/6_monitoring.py's pipeline-history table reads from.
 
     Note: steps aren't wrapped in one shared MLflow run — batch_scorer.run() and
     retrain_pipeline's own logging each open their own top-level `mlflow.start_run()`
@@ -143,11 +154,22 @@ def run() -> dict:
     raises "Run already active". Instead, each step logs its own run as it already did
     before this pipeline existed, and this function additionally logs one orchestration-level
     summary run once every step has finished."""
-    new_data = check_for_new_data()
-    inserted_rows = run_incremental_ingestion()
-    rescore_all_customers()
-    drift = check_drift()
-    retrain_result = retrain_if_needed(drift)
+    start = time.time()
+    try:
+        new_data = check_for_new_data()
+        inserted_rows = run_incremental_ingestion()
+        rescored_rows = rescore_all_customers()
+        drift = check_drift()
+        retrain_result = retrain_if_needed(drift)
+    except Exception as e:
+        record_pipeline_run(
+            pipeline_name="daily_pipeline",
+            status="failed",
+            duration_seconds=time.time() - start,
+            details=str(e),
+        )
+        log.error("Daily pipeline failed: %s", e)
+        raise
 
     steps = {
         "new_data": new_data,
@@ -168,6 +190,17 @@ def run() -> dict:
             mlflow.log_param("promoted", retrain_result["promoted"])
         mlflow.log_artifact(report_path)
         run_id = mlflow.active_run().info.run_id
+
+    duration = time.time() - start
+    record_pipeline_run(
+        pipeline_name="daily_pipeline",
+        status="success",
+        rows_processed=rescored_rows,
+        duration_seconds=duration,
+        details=(
+            f"retrain_needed={drift['retrain_needed']}, retrained={retrain_result['retrained']}"
+        ),
+    )
 
     log.info("Daily pipeline complete — MLflow summary run_id=%s", run_id)
     return {**steps, "report_path": report_path, "mlflow_run_id": run_id}

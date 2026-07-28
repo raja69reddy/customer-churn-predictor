@@ -24,6 +24,7 @@ sys.path.insert(
 
 from dashboard import demo_mode  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
+from src.utils.pipeline_tracking import get_pipeline_run_history  # noqa: E402
 
 try:
     from src.monitoring.data_drift_detector import (
@@ -195,6 +196,95 @@ def render_live_monitoring_sections() -> None:
         )
 
 
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
+def load_model_performance_trend() -> pd.DataFrame:
+    """Every model_registry row ordered by trained_at — real historical AUC across every
+    training/retrain run in this project's build history (24+ rows, spanning many days).
+    """
+    engine = get_engine()
+    return pd.read_sql(
+        "SELECT model_name, model_version, auc_score, is_active, trained_at "
+        "FROM model_registry ORDER BY trained_at",
+        engine,
+    )
+
+
+def render_pipeline_history_section() -> None:
+    st.subheader("🗓️ Daily Pipeline Run History")
+    daily_runs = get_pipeline_run_history(pipeline_name="daily_pipeline", limit=20)
+    if daily_runs.empty:
+        st.info(
+            "No daily_pipeline runs recorded yet — run `python -m src.pipelines.daily_pipeline`."
+        )
+    else:
+        display = daily_runs[
+            ["run_at", "status", "rows_processed", "duration_seconds"]
+        ].copy()
+        display["status"] = display["status"].map(
+            lambda s: f"{'🟢' if s == 'success' else '🔴'} {s}"
+        )
+        display["duration_seconds"] = display["duration_seconds"].round(2)
+        display = display.rename(
+            columns={
+                "run_at": "date",
+                "rows_processed": "rows processed",
+                "duration_seconds": "duration (s)",
+            }
+        )
+        st.dataframe(display, use_container_width=True, hide_index=True)
+
+    st.divider()
+    st.subheader("📆 Weekly Pipeline Runs")
+    weekly_runs = get_pipeline_run_history(pipeline_name="weekly_pipeline", limit=20)
+    if weekly_runs.empty:
+        st.info(
+            "No weekly_pipeline runs recorded yet — run `python -m src.pipelines.weekly_pipeline`."
+        )
+    elif len(weekly_runs) == 1:
+        # A bar/line chart over a single timestamp renders oddly (Plotly zooms to
+        # microsecond-level x-axis ticks) — same class of bug fixed on the overview page in
+        # Day 26/28; show it as a metric instead until there's more than one run.
+        row = weekly_runs.iloc[0]
+        st.metric(
+            f"Customers Processed ({row['run_at'].strftime('%Y-%m-%d')})",
+            format(int(row["rows_processed"]), ","),
+        )
+    else:
+        weekly_fig = px.bar(
+            weekly_runs.sort_values("run_at"),
+            x="run_at",
+            y="rows_processed",
+            color="status",
+            color_discrete_map={"success": "#2ca02c", "failed": "#d62728"},
+            title="Weekly Pipeline Runs — Customers Processed",
+        )
+        weekly_fig.update_layout(
+            xaxis_title="Run Date", yaxis_title="Customers Processed"
+        )
+        st.plotly_chart(weekly_fig, use_container_width=True)
+
+    st.divider()
+    st.subheader("📈 Model Performance Trend Over Time")
+    performance_trend = load_model_performance_trend()
+    if performance_trend.empty:
+        st.info("No model_registry history available yet.")
+    else:
+        perf_fig = px.line(
+            performance_trend,
+            x="trained_at",
+            y="auc_score",
+            color="model_name",
+            markers=True,
+            title="AUC Score by Training Run",
+        )
+        perf_fig.update_layout(xaxis_title="Trained At", yaxis_title="AUC Score")
+        st.plotly_chart(perf_fig, use_container_width=True)
+        st.caption(
+            f"{len(performance_trend)} training runs across "
+            f"{performance_trend['model_name'].nunique()} model types."
+        )
+
+
 def main() -> None:
     is_demo = demo_mode.is_demo_mode()
     if is_demo:
@@ -261,6 +351,19 @@ def main() -> None:
         fig.update_layout(xaxis_title="Date", yaxis_title="Average Churn Probability")
         fig.update_yaxes(tickformat=".0%")
         st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
+    if is_demo:
+        st.info(
+            "ℹ️ Pipeline run history and model performance trend require a live database "
+            "connection (pipeline_runs/model_registry aren't part of the demo-mode dataset). "
+            "Run this dashboard locally with a populated database to see them."
+        )
+    else:
+        try:
+            render_pipeline_history_section()
+        except Exception as e:
+            st.error(f"⚠️ Could not load pipeline history: {e}")
 
 
 main()

@@ -83,3 +83,28 @@ CREATE TABLE IF NOT EXISTS churn_predictions_history (
     predicted_at      TIMESTAMP,
     archived_at       TIMESTAMP DEFAULT NOW()
 );
+
+-- 6. Pipeline run history (Day 29) — every daily/weekly/model pipeline run logs one row here,
+--    via src/utils/pipeline_tracking.py::record_pipeline_run(), so
+--    dashboard/pages/6_monitoring.py can show a unified run-history table without querying
+--    MLflow directly.
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id                 SERIAL PRIMARY KEY,
+    pipeline_name      VARCHAR(50),
+    status             VARCHAR(20),
+    rows_processed     INTEGER,
+    duration_seconds   FLOAT,
+    details            TEXT,
+    run_at             TIMESTAMP DEFAULT NOW()
+);
+
+-- 7. Alerts / notifications log (Day 29) — src/utils/notifier.py writes every alert here
+--    (high-risk-customer, model-drift, pipeline-failure, weekly-digest) so alert history
+--    survives past a single script's stdout/log file.
+CREATE TABLE IF NOT EXISTS alerts (
+    id            SERIAL PRIMARY KEY,
+    alert_type    VARCHAR(50),
+    severity      VARCHAR(20),
+    message       TEXT,
+    created_at    TIMESTAMP DEFAULT NOW()
+);

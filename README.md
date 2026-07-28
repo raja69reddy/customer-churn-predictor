@@ -519,6 +519,13 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Created daily_pipeline.py for automated daily runs
 - Full MLOps pipeline now complete!
 
+✅ **Day 28 — Segmentation + Trend Analysis**
+- Created customer_segmentation.py with 2D matrix
+- Created dashboard/pages/7_segmentation.py
+- Created trend_analyzer.py with 3-month forecast
+- Added churn trend chart with forecast to overview page
+- Customer segmentation layer complete!
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

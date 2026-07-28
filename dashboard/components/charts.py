@@ -141,6 +141,25 @@ def probability_gauge(probability: float, color: str, title: str = "Churn Probab
     return fig
 
 
+def segment_matrix_heatmap(matrix):
+    """Interactive Value x Risk segmentation heatmap. Expects a pandas DataFrame like
+    src.analysis.customer_segmentation.create_2d_segments()'s output (rows=value segments,
+    columns=risk segments, values=customer counts)."""
+    fig = px.imshow(
+        matrix.values,
+        x=list(matrix.columns),
+        y=list(matrix.index),
+        text_auto=True,
+        color_continuous_scale="Reds",
+        labels={"x": "Risk Segment", "y": "Value Segment", "color": "Customers"},
+    )
+    fig.update_layout(
+        title="Customer Segmentation Matrix (Value x Risk)",
+        margin=dict(l=20, r=20, t=50, b=20),
+    )
+    return fig
+
+
 def shap_waterfall_chart(explanation: dict):
     """Waterfall chart from a src.models.model_explainer.explain_prediction() result — starts
     at the SHAP base value and adds each feature's contribution (already sorted by magnitude)

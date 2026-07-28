@@ -19,6 +19,11 @@ from dashboard.components.metrics import (  # noqa: E402
     format_number,
     format_percentage,
 )
+from src.analysis.trend_analyzer import AVG_DAYS_PER_MONTH  # noqa: E402
+from src.analysis.trend_analyzer import analyze_churn_trend  # noqa: E402
+from src.analysis.trend_analyzer import detect_seasonal_patterns  # noqa: E402
+from src.analysis.trend_analyzer import forecast_churn_rate  # noqa: E402
+from src.analysis.trend_analyzer import get_trend_insights  # noqa: E402
 from src.utils.db import get_engine  # noqa: E402
 
 st.set_page_config(page_title="Churn Overview", page_icon="🔮", layout="wide")
@@ -230,6 +235,39 @@ def load_churn_trend() -> pd.DataFrame:
     return pd.read_sql(query, engine)
 
 
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
+def load_trend_analysis() -> dict:
+    """Monthly churn-RATE trend (ground truth, via src/analysis/trend_analyzer.py's
+    implied-join-month proxy) + forecast + seasonal check + plain-English insight.
+
+    Distinct from load_churn_trend() above, which tracks daily average PREDICTION probability
+    from the scoring-run archive — this tracks actual historical churn rate by implied join
+    month, a different (and, given the short ~1-month prediction history, richer) time axis.
+    """
+    if demo_mode.is_demo_mode():
+        demo = demo_mode.get_demo_predictions()
+        df = demo[["customer_id", "tenure", "churn"]].copy()
+        reference_date = datetime.now()
+        df["implied_join_date"] = reference_date - pd.to_timedelta(
+            df["tenure"] * AVG_DAYS_PER_MONTH, unit="D"
+        )
+        df["join_month"] = df["implied_join_date"].dt.to_period("M")
+    else:
+        df = None
+
+    trend_df = analyze_churn_trend(periods=6, df=df)
+    forecast_df = forecast_churn_rate(months=3, trend_df=trend_df)
+    seasonal = detect_seasonal_patterns(df=df)
+    insight = get_trend_insights(trend_df, forecast_df, df=df)
+
+    return {
+        "trend_df": trend_df,
+        "forecast_df": forecast_df,
+        "seasonal": seasonal,
+        "insight": insight,
+    }
+
+
 def main() -> None:
     is_demo = demo_mode.is_demo_mode()
     if is_demo:
@@ -428,6 +466,84 @@ def main() -> None:
             title="Churn Rate (%) — Tenure Group x Contract Type",
         )
         st.plotly_chart(heatmap_fig, use_container_width=True)
+
+    st.divider()
+    st.subheader("Churn Rate Trend & Forecast")
+    try:
+        with st.spinner("Analyzing trend..."):
+            trend = load_trend_analysis()
+    except Exception as e:
+        st.error(f"⚠️ Could not compute trend analysis: {e}")
+    else:
+        trend_df = trend["trend_df"]
+        forecast_df = trend["forecast_df"]
+        seasonal = trend["seasonal"]
+
+        trend_fig = px.line(
+            trend_df,
+            x="join_month",
+            y="churn_rate",
+            markers=True,
+            title="Churn Rate — Actual vs Forecast",
+        )
+        trend_fig.data[0].name = "Actual"
+        trend_fig.data[0].showlegend = True
+
+        forecast_x = [trend_df["join_month"].iloc[-1]] + list(forecast_df["join_month"])
+        forecast_y = [trend_df["churn_rate"].iloc[-1]] + list(forecast_df["churn_rate"])
+        trend_fig.add_scatter(
+            x=forecast_x,
+            y=forecast_y,
+            mode="lines+markers",
+            name="Forecast",
+            line=dict(dash="dash", color="orange"),
+        )
+
+        # Seasonal high/low are calendar months (e.g. "August"), not necessarily one of the
+        # plotted join_month x-values (e.g. "2026-01") — anchor to the paper, not the data
+        # coordinates, so the annotation always renders regardless of which months are plotted.
+        trend_fig.add_annotation(
+            xref="paper",
+            yref="paper",
+            x=0.02,
+            y=0.98,
+            xanchor="left",
+            text=(
+                f"Seasonal high: {seasonal['highest_month']} "
+                f"({seasonal['highest_churn_rate']:.1f}%)"
+            ),
+            showarrow=False,
+            font=dict(color="#d62728"),
+            align="left",
+            bgcolor="rgba(255,255,255,0.7)",
+        )
+        trend_fig.add_annotation(
+            xref="paper",
+            yref="paper",
+            x=0.02,
+            y=0.90,
+            xanchor="left",
+            text=(
+                f"Seasonal low: {seasonal['lowest_month']} "
+                f"({seasonal['lowest_churn_rate']:.1f}%)"
+            ),
+            showarrow=False,
+            font=dict(color="#2ca02c"),
+            align="left",
+            bgcolor="rgba(255,255,255,0.7)",
+        )
+        trend_fig.update_layout(
+            xaxis_title="Month", yaxis_title="Churn Rate (%)", legend_title=None
+        )
+        st.plotly_chart(trend_fig, use_container_width=True)
+
+        st.info(trend["insight"])
+        st.caption(
+            "Trend/forecast use each customer's implied join month (derived from tenure), "
+            "since real prediction history only spans about a month — see "
+            "src/analysis/trend_analyzer.py for the full methodology and caveats. Seasonal "
+            "annotations mark the highest/lowest calendar-month churn rate observed."
+        )
 
     st.divider()
     csv_bytes = customers.to_csv(index=False).encode("utf-8")

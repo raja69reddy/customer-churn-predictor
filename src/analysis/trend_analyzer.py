@@ -160,11 +160,18 @@ def forecast_churn_rate(months: int = 3, trend_df: pd.DataFrame = None) -> pd.Da
 
 
 def get_trend_insights(
-    trend_df: pd.DataFrame = None, forecast_df: pd.DataFrame = None
+    trend_df: pd.DataFrame = None,
+    forecast_df: pd.DataFrame = None,
+    df: pd.DataFrame = None,
 ) -> str:
-    """Plain-English summary of the trend direction, magnitude, and forecast."""
+    """Plain-English summary of the trend direction, magnitude, and forecast.
+
+    `df` (raw customer rows with implied_join_date, as built by _load_customers()) is passed
+    through to the internal seasonal check — needed so a caller with a pre-loaded/demo-mode df
+    doesn't have this function silently fall back to a live DB query for that one piece.
+    """
     if trend_df is None:
-        trend_df = analyze_churn_trend()
+        trend_df = analyze_churn_trend(df=df)
     if forecast_df is None:
         forecast_df = forecast_churn_rate(trend_df=trend_df)
 
@@ -179,7 +186,7 @@ def get_trend_insights(
     else:
         direction = f"has fallen by {delta:+.2f} percentage points"
 
-    seasonal = detect_seasonal_patterns()
+    seasonal = detect_seasonal_patterns(df=df)
     seasonal_note = (
         f"Calendar-month churn rates vary by {seasonal['spread_pct_points']:.1f} points "
         f"between the highest ({seasonal['highest_month']}, {seasonal['highest_churn_rate']:.1f}%) "

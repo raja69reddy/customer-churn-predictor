@@ -1,5 +1,11 @@
 # Changelog
 
+## Day 29 - Pipelines + Notifications
+- Created src/pipelines/weekly_pipeline.py
+- Created src/pipelines/model_pipeline.py
+- Updated monitoring page with pipeline history
+- Created src/utils/notifier.py
+
 ## Day 28 - Segmentation + Trend Analysis
 - Created src/analysis/customer_segmentation.py
 - Created dashboard/pages/7_segmentation.py

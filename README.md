@@ -526,6 +526,13 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 - Added churn trend chart with forecast to overview page
 - Customer segmentation layer complete!
 
+✅ **Day 29 — Pipelines + Notifications**
+- Created weekly_pipeline.py with WoW churn comparison
+- Created model_pipeline.py with auto retrain and rollback
+- Updated monitoring page with pipeline history table
+- Created notifier.py for alert management
+- Full MLOps pipeline infrastructure complete!
+
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns

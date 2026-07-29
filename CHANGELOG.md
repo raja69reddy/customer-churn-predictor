@@ -1,5 +1,13 @@
 # Changelog
 
+## Day 30 - Phase 3 Complete + v2.0.0 Release
+- Final pipeline run successful
+- All tests passing
+- README fully polished
+- Project stats added
+- Tagged v2.0.0 release
+- Customer Churn Predictor fully complete!
+
 ## Day 29 - Pipelines + Notifications
 - Created src/pipelines/weekly_pipeline.py
 - Created src/pipelines/model_pipeline.py

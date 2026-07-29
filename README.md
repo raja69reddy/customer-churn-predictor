@@ -14,9 +14,9 @@ An end-to-end machine learning system that predicts telecom customer churn and r
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.28-red)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Built in 21 days](https://img.shields.io/badge/Built%20in-21%20Days-brightgreen)
+![30 Days](https://img.shields.io/badge/Built%20in-30%20Days-brightgreen)
 
-**Project completed:** 2026-07-19
+**Project completed:** 2026-07-29
 
 ## ✨ Project Highlights
 - 🤖 6 ML models trained and compared
@@ -62,8 +62,11 @@ customer-churn-predictor/
 ├── src/
 │   ├── data/          # ingestion pipeline
 │   ├── features/      # feature engineering
-│   ├── models/        # train / evaluate / predict
-│   └── utils/         # shared helpers (DB connection)
+│   ├── models/        # train / evaluate / predict / retrain / explain
+│   ├── analysis/      # cohort, revenue, segmentation, trend, churn-driver analysis
+│   ├── monitoring/    # PSI-based model + data drift detection
+│   ├── pipelines/     # daily / weekly / model lifecycle orchestration
+│   └── utils/         # shared helpers (DB, logging, alerts, pipeline tracking)
 ├── ai/                # GPT-powered churn explainer
 ├── dashboard/         # Streamlit app
 ├── api/               # FastAPI prediction service
@@ -181,14 +184,16 @@ configured, skip straight to step 6 — the dashboard automatically falls back t
 
 ## Dashboard
 The Streamlit dashboard (dashboard/app.py) provides:
-- Overall churn rate KPIs
-- Risk segment breakdown
-- Feature importance charts (SHAP)
-- Per-customer churn probability and GPT explanation
+- Overall churn rate KPIs, trend, and forecast
+- Risk segment breakdown and Value x Risk segmentation matrix
+- Feature importance charts (SHAP), including a per-customer SHAP waterfall
+- Per-customer churn probability, what-if scenarios, and GPT explanation
+- PSI-based model/data drift monitoring and pipeline run history
 
 ### Dashboard Screenshots
 _Screenshots to be added — run `streamlit run dashboard/app.py` locally and navigate to each of the
-5 pages (Overview, Predictions, Customer Lookup, Model Performance, Retention Targeting) to preview._
+7 pages (Overview, Predictions, Customer Lookup, Model Performance, Retention Targeting,
+Model Monitoring, Customer Segmentation) to preview._
 
 | Page | Screenshot |
 |---|---|
@@ -197,6 +202,8 @@ _Screenshots to be added — run `streamlit run dashboard/app.py` locally and na
 | Customer Lookup | _placeholder_ |
 | Model Performance | _placeholder_ |
 | Retention Targeting | _placeholder_ |
+| Model Monitoring | _placeholder_ |
+| Customer Segmentation | _placeholder_ |
 
 ## API Endpoints
 Full endpoint reference and curl examples: [api/README.md](api/README.md). Summary:
@@ -536,7 +543,7 @@ Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/
 ## 🔮 Future Work
 - Real-time streaming predictions with Kafka
 - A/B testing framework for retention campaigns
-- Email notification system for high risk alerts
+- Real email/Slack delivery for alerts (currently logged to the `alerts` table only — see `src/utils/notifier.py`)
 - Integration with CRM systems (Salesforce)
 - Deep learning model (Neural Network) comparison
-- Automated retraining pipeline with Airflow
+- Airflow-based scheduling for the daily/weekly/model pipelines (currently run manually or via cron — see `src/pipelines/`)

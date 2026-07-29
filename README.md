@@ -282,6 +282,16 @@ docker-compose up --build
 ### CI
 Every push to `main` runs the test suite via GitHub Actions (`.github/workflows/ci.yml`).
 
+## 📊 Project Stats
+- ⏱️ Built in 30 days
+- 🤖 6 ML models trained
+- 📊 AUC score: 0.96 (best model)
+- 🎯 7,043 customers scored
+- 📈 MLflow experiments tracked
+- 🚀 FastAPI + Streamlit deployed
+- 🐳 Docker ready
+- ✅ CI/CD pipeline active
+
 ## 📋 Progress Log
 
 ✅ **Day 1 — Project Scaffold**
